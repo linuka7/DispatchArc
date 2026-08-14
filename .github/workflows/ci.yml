@@ -1,4 +1,4 @@
-﻿name: DispatchArc CI
+name: DispatchArc CI
 
 on:
   push:
@@ -39,6 +39,7 @@ jobs:
     env:
       DOTNET_NOLOGO: true
       DOTNET_CLI_TELEMETRY_OPTOUT: true
+      ConnectionStrings__Database: Host=localhost;Port=5432;Database=dispatcharc_tests;Username=dispatcharc_dev;Password=DispatchArcCiOnly
       DISPATCHARC_TEST_DATABASE: Host=localhost;Port=5432;Database=dispatcharc_tests;Username=dispatcharc_dev;Password=DispatchArcCiOnly
 
     steps:
