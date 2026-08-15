@@ -22,6 +22,29 @@ public sealed class AppUserRepository(
             cancellationToken);
     }
 
+    public Task<AppUser?> GetByIdAsync(
+        Guid tenantId,
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        return database.Users.SingleOrDefaultAsync(
+            user =>
+                user.TenantId == tenantId &&
+                user.Id == userId,
+            cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<AppUser>> ListByTenantAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        return await database.Users
+            .AsNoTracking()
+            .Where(user => user.TenantId == tenantId)
+            .OrderBy(user => user.FullName)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(
         AppUser user,
         CancellationToken cancellationToken = default)
