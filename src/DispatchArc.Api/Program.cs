@@ -23,6 +23,7 @@ builder.Services.AddProblemDetails();
 
 builder.Services.AddScoped<TenantService>();
 builder.Services.AddScoped<CustomerService>();
+builder.Services.AddScoped<DispatchArc.Application.TeamMembers.TeamMemberService>();
 builder.Services.AddScoped<ServiceJobService>();
 
 var connectionString =
@@ -149,4 +150,5 @@ app.Run();
 public partial class Program
 {
 }
+
 
