@@ -1,21 +1,21 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
+using System.Text;
+using DispatchArc.Api.Auth;
 using DispatchArc.Application.Customers;
 using DispatchArc.Application.Jobs;
 using DispatchArc.Application.Tenants;
+using DispatchArc.Domain.Entities;
+using DispatchArc.Domain.Enums;
 using DispatchArc.Infrastructure;
 using DispatchArc.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services
-    .AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.Converters.Add(
-            new JsonStringEnumConverter());
-    });
-
+builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 
@@ -26,9 +26,81 @@ builder.Services.AddScoped<ServiceJobService>();
 var connectionString =
     builder.Configuration.GetConnectionString("Database")
     ?? throw new InvalidOperationException(
-        "The database connection string is missing.");
+        "Database connection string is missing.");
 
 builder.Services.AddInfrastructure(connectionString);
+
+var jwtOptions = builder.Configuration
+    .GetSection(JwtOptions.SectionName)
+    .Get<JwtOptions>()
+    ?? throw new InvalidOperationException(
+        "JWT configuration is missing.");
+
+if (string.IsNullOrWhiteSpace(jwtOptions.Issuer) ||
+    string.IsNullOrWhiteSpace(jwtOptions.Audience) ||
+    string.IsNullOrWhiteSpace(jwtOptions.Key) ||
+    jwtOptions.Key.Length < 32)
+{
+    throw new InvalidOperationException(
+        "JWT issuer, audience and a key of at least 32 characters are required.");
+}
+
+builder.Services.Configure<JwtOptions>(
+    builder.Configuration.GetSection(JwtOptions.SectionName));
+
+builder.Services.AddScoped<JwtTokenService>();
+
+builder.Services.AddScoped<
+    IPasswordHasher<AppUser>,
+    PasswordHasher<AppUser>>();
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters =
+            new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = jwtOptions.Issuer,
+                ValidAudience = jwtOptions.Audience,
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(jwtOptions.Key)),
+                NameClaimType = System.Security.Claims.ClaimTypes.Name,
+                RoleClaimType = System.Security.Claims.ClaimTypes.Role,
+                ClockSkew = TimeSpan.FromSeconds(30)
+            };
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(
+        "OwnerOnly",
+        policy => policy.RequireRole(
+            nameof(UserRole.Owner)));
+
+    options.AddPolicy(
+        "DispatchManagement",
+        policy => policy.RequireRole(
+            nameof(UserRole.Owner),
+            nameof(UserRole.Dispatcher)));
+
+    options.AddPolicy(
+        "TechnicianAccess",
+        policy => policy.RequireRole(
+            nameof(UserRole.Owner),
+            nameof(UserRole.Dispatcher),
+            nameof(UserRole.Technician)));
+
+    options.AddPolicy(
+        "FinanceAccess",
+        policy => policy.RequireRole(
+            nameof(UserRole.Owner),
+            nameof(UserRole.Finance)));
+});
 
 var app = builder.Build();
 
@@ -36,11 +108,10 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
-else
-{
-    app.UseHttpsRedirection();
-}
 
+app.UseHttpsRedirection();
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
@@ -51,28 +122,19 @@ app.MapGet(
         DispatchArcDbContext database,
         CancellationToken cancellationToken) =>
     {
-        try
-        {
-            var canConnect =
-                await database.Database.CanConnectAsync(cancellationToken);
+        var canConnect = await database.Database
+            .CanConnectAsync(cancellationToken);
 
-            return canConnect
-                ? Results.Ok(new
-                {
-                    status = "healthy",
-                    service = "PostgreSQL",
-                    application = "DispatchArc"
-                })
-                : Results.Problem(
-                    title: "Database unavailable",
-                    statusCode: StatusCodes.Status503ServiceUnavailable);
-        }
-        catch
-        {
-            return Results.Problem(
-                title: "Database unavailable",
+        return canConnect
+            ? Results.Ok(new
+            {
+                status = "healthy",
+                service = "PostgreSQL",
+                application = "DispatchArc"
+            })
+            : Results.Problem(
+                title: "Database connection failed.",
                 statusCode: StatusCodes.Status503ServiceUnavailable);
-        }
     });
 
 app.Run();
@@ -80,4 +142,3 @@ app.Run();
 public partial class Program
 {
 }
-
