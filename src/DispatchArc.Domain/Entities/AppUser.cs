@@ -35,20 +35,22 @@ public sealed class AppUser
     }
 
     public Guid Id { get; private set; }
-
     public Guid TenantId { get; private set; }
-
     public string FullName { get; private set; } = string.Empty;
-
     public string Email { get; private set; } = string.Empty;
-
+    public string PasswordHash { get; private set; } = string.Empty;
     public UserRole Role { get; private set; }
-
     public bool IsActive { get; private set; }
-
     public DateTimeOffset CreatedAtUtc { get; private set; }
-
     public DateTimeOffset UpdatedAtUtc { get; private set; }
+
+    public void SetPasswordHash(string passwordHash)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(passwordHash);
+
+        PasswordHash = passwordHash;
+        UpdatedAtUtc = DateTimeOffset.UtcNow;
+    }
 
     public void ChangeRole(UserRole role)
     {

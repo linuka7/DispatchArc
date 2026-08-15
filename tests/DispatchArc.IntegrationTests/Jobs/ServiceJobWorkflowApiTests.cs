@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json.Nodes;
 using DispatchArc.IntegrationTests.Infrastructure;
 using Xunit;
+using System.Net.Http.Headers;
 
 namespace DispatchArc.IntegrationTests.Jobs;
 
@@ -111,6 +112,23 @@ public sealed class ServiceJobWorkflowApiTests
 
         var tenant = await ReadObjectAsync(tenantResponse);
         var tenantId = GetId(tenant);
+
+        var registerResponse = await _client.PostAsJsonAsync(
+    "/api/auth/register",
+    new
+    {
+        tenantId,
+        fullName = "Integration Owner",
+        email = $"owner-{uniqueId}@example.com",
+        password = "Integration#2026Secure"
+    });
+
+var authentication = await ReadObjectAsync(registerResponse);
+
+_client.DefaultRequestHeaders.Authorization =
+    new AuthenticationHeaderValue(
+        "Bearer",
+        authentication["accessToken"]!.GetValue<string>());
 
         var customerResponse = await _client.PostAsJsonAsync(
             $"/api/tenants/{tenantId}/customers",

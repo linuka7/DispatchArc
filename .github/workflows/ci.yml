@@ -39,6 +39,9 @@ jobs:
     env:
       DOTNET_NOLOGO: true
       DOTNET_CLI_TELEMETRY_OPTOUT: true
+      Jwt__Issuer: DispatchArc.Api
+      Jwt__Audience: DispatchArc.Client
+      Jwt__Key: DispatchArc_CI_Test_Jwt_Key_2026_Not_For_Production_8F3kP9qL
       ConnectionStrings__Database: Host=localhost;Port=5432;Database=dispatcharc_tests;Username=dispatcharc_dev;Password=DispatchArcCiOnly
       DISPATCHARC_TEST_DATABASE: Host=localhost;Port=5432;Database=dispatcharc_tests;Username=dispatcharc_dev;Password=DispatchArcCiOnly
 
@@ -59,3 +62,4 @@ jobs:
 
       - name: Run tests
         run: dotnet test DispatchArc.sln --configuration Release --no-build --logger "console;verbosity=normal"
+

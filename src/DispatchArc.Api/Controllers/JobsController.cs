@@ -1,4 +1,5 @@
-﻿using DispatchArc.Api.Contracts.Jobs;
+using Microsoft.AspNetCore.Authorization;
+using DispatchArc.Api.Contracts.Jobs;
 using DispatchArc.Application.Jobs;
 using DispatchArc.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace DispatchArc.Api.Controllers;
 
 [ApiController]
+[Authorize(Policy = "TenantAccess")]
 [Route("api/tenants/{tenantId:guid}/jobs")]
 public sealed class JobsController : ControllerBase
 {
@@ -17,6 +19,7 @@ public sealed class JobsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "DispatchManagement")]
     public async Task<ActionResult<ServiceJobResponse>> Create(
         Guid tenantId,
         CreateServiceJobRequest request,
@@ -90,6 +93,7 @@ public sealed class JobsController : ControllerBase
     }
 
     [HttpPost("{jobId:guid}/quote")]
+    [Authorize(Policy = "DispatchManagement")]
     public Task<ActionResult<ServiceJobResponse>> Quote(
         Guid tenantId,
         Guid jobId,
@@ -103,6 +107,7 @@ public sealed class JobsController : ControllerBase
     }
 
     [HttpPost("{jobId:guid}/approve")]
+    [Authorize(Policy = "DispatchManagement")]
     public Task<ActionResult<ServiceJobResponse>> Approve(
         Guid tenantId,
         Guid jobId,
@@ -116,6 +121,7 @@ public sealed class JobsController : ControllerBase
     }
 
     [HttpPost("{jobId:guid}/schedule")]
+    [Authorize(Policy = "DispatchManagement")]
     public Task<ActionResult<ServiceJobResponse>> Schedule(
         Guid tenantId,
         Guid jobId,
@@ -132,6 +138,7 @@ public sealed class JobsController : ControllerBase
     }
 
     [HttpPost("{jobId:guid}/start")]
+    [Authorize(Policy = "TechnicianAccess")]
     public Task<ActionResult<ServiceJobResponse>> Start(
         Guid tenantId,
         Guid jobId,
@@ -145,6 +152,7 @@ public sealed class JobsController : ControllerBase
     }
 
     [HttpPost("{jobId:guid}/complete")]
+    [Authorize(Policy = "TechnicianAccess")]
     public Task<ActionResult<ServiceJobResponse>> Complete(
         Guid tenantId,
         Guid jobId,
@@ -158,6 +166,7 @@ public sealed class JobsController : ControllerBase
     }
 
     [HttpPost("{jobId:guid}/invoice")]
+    [Authorize(Policy = "FinanceAccess")]
     public Task<ActionResult<ServiceJobResponse>> Invoice(
         Guid tenantId,
         Guid jobId,
@@ -171,6 +180,7 @@ public sealed class JobsController : ControllerBase
     }
 
     [HttpPost("{jobId:guid}/cancel")]
+    [Authorize(Policy = "DispatchManagement")]
     public Task<ActionResult<ServiceJobResponse>> Cancel(
         Guid tenantId,
         Guid jobId,
@@ -213,3 +223,5 @@ public sealed class JobsController : ControllerBase
         }
     }
 }
+
+

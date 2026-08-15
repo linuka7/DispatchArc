@@ -1,10 +1,12 @@
-﻿using DispatchArc.Api.Contracts.Customers;
+using Microsoft.AspNetCore.Authorization;
+using DispatchArc.Api.Contracts.Customers;
 using DispatchArc.Application.Customers;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DispatchArc.Api.Controllers;
 
 [ApiController]
+[Authorize(Policy = "TenantAccess")]
 [Route("api/tenants/{tenantId:guid}/customers")]
 public sealed class CustomersController : ControllerBase
 {
@@ -16,6 +18,7 @@ public sealed class CustomersController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "DispatchManagement")]
     public async Task<ActionResult<CustomerResponse>> Create(
         Guid tenantId,
         CreateCustomerRequest request,
@@ -78,3 +81,5 @@ public sealed class CustomersController : ControllerBase
         return customer is null ? NotFound() : Ok(customer);
     }
 }
+
+
