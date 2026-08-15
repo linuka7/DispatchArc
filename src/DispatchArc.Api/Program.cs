@@ -1,3 +1,5 @@
+using DispatchArc.Api.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using System.Text.Json.Serialization;
 using System.Text;
 using DispatchArc.Api.Auth;
@@ -75,8 +77,13 @@ builder.Services
             };
     });
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<IAuthorizationHandler, TenantAccessHandler>();
+
 builder.Services.AddAuthorization(options =>
 {
+    options.AddPolicy("TenantAccess", policy =>
+        policy.AddRequirements(new TenantAccessRequirement()));
     options.AddPolicy(
         "OwnerOnly",
         policy => policy.RequireRole(
@@ -142,3 +149,4 @@ app.Run();
 public partial class Program
 {
 }
+
