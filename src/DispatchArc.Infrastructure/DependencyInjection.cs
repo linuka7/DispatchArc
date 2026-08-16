@@ -1,5 +1,6 @@
 using DispatchArc.Application.Auth;
 using DispatchArc.Application.Customers;
+using DispatchArc.Application.Dashboard;
 using DispatchArc.Application.Jobs;
 using DispatchArc.Application.Invoices;
 using DispatchArc.Application.Payments;
@@ -29,6 +30,7 @@ public static class DependencyInjection
         services.AddScoped<IInvoiceRepository, InvoiceRepository>();
         services.AddScoped<IInvoiceLineItemRepository, InvoiceLineItemRepository>();
         services.AddScoped<IPaymentRepository, PaymentRepository>();
+        services.AddScoped<IDashboardRepository, DashboardRepository>();
         services.AddScoped<IAppUserRepository, AppUserRepository>();
 
         return services;
