@@ -120,6 +120,31 @@ public sealed class JobsController : ControllerBase
                 cancellationToken));
     }
 
+    [HttpPost("{jobId:guid}/assign-technician")]
+    [Authorize(Policy = "DispatchManagement")]
+    public Task<ActionResult<ServiceJobResponse>> AssignTechnician(
+        Guid tenantId,
+        Guid jobId,
+        AssignTechnicianRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (request.TechnicianId == Guid.Empty)
+        {
+            return Task.FromResult<ActionResult<ServiceJobResponse>>(
+                BadRequest(new ProblemDetails
+                {
+                    Title = "Technician ID is required",
+                    Status = StatusCodes.Status400BadRequest
+                }));
+        }
+
+        return ExecuteWorkflowActionAsync(() =>
+            _jobService.AssignTechnicianAsync(
+                tenantId,
+                jobId,
+                request.TechnicianId,
+                cancellationToken));
+    }
     [HttpPost("{jobId:guid}/schedule")]
     [Authorize(Policy = "DispatchManagement")]
     public Task<ActionResult<ServiceJobResponse>> Schedule(

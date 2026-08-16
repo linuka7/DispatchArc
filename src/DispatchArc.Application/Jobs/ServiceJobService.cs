@@ -1,4 +1,5 @@
-﻿using DispatchArc.Application.Customers;
+﻿using DispatchArc.Application.Auth;
+using DispatchArc.Application.Customers;
 using DispatchArc.Domain.Entities;
 using DispatchArc.Domain.Enums;
 
@@ -8,13 +9,16 @@ public sealed class ServiceJobService
 {
     private readonly IServiceJobRepository _jobs;
     private readonly ICustomerRepository _customers;
+    private readonly IAppUserRepository _users;
 
     public ServiceJobService(
         IServiceJobRepository jobs,
-        ICustomerRepository customers)
+        ICustomerRepository customers,
+        IAppUserRepository users)
     {
         _jobs = jobs;
         _customers = customers;
+        _users = users;
     }
 
     public async Task<ServiceJobResponse?> CreateAsync(
@@ -104,18 +108,100 @@ public sealed class ServiceJobService
             cancellationToken);
     }
 
-    public Task<ServiceJobResponse?> ScheduleAsync(
+    public async Task<ServiceJobResponse?> AssignTechnicianAsync(
+        Guid tenantId,
+        Guid jobId,
+        Guid technicianId,
+        CancellationToken cancellationToken)
+    {
+        var job = await _jobs.GetByIdAsync(
+            tenantId,
+            jobId,
+            cancellationToken);
+
+        if (job is null)
+        {
+            return null;
+        }
+
+        var technician = await _users.GetByIdAsync(
+            tenantId,
+            technicianId,
+            cancellationToken);
+
+        if (technician is null)
+        {
+            throw new ArgumentException(
+                "The selected technician does not exist in this tenant.");
+        }
+
+        if (technician.Role != UserRole.Technician)
+        {
+            throw new ArgumentException(
+                "The selected user is not a technician.");
+        }
+
+        if (!technician.IsActive)
+        {
+            throw new ArgumentException(
+                "The selected technician is inactive.");
+        }
+
+        job.AssignTechnician(technicianId);
+
+        await _jobs.SaveChangesAsync(cancellationToken);
+
+        return Map(job);
+    }
+
+    public async Task<ServiceJobResponse?> ScheduleAsync(
         Guid tenantId,
         Guid jobId,
         DateTimeOffset startUtc,
         DateTimeOffset endUtc,
         CancellationToken cancellationToken)
     {
-        return ApplyWorkflowActionAsync(
+        var job = await _jobs.GetByIdAsync(
             tenantId,
             jobId,
-            job => job.Schedule(startUtc, endUtc),
             cancellationToken);
+
+        if (job is null)
+        {
+            return null;
+        }
+
+        if (endUtc <= startUtc)
+        {
+            throw new ArgumentException(
+                "The scheduled end must be after the start.");
+        }
+
+        if (!job.AssignedTechnicianId.HasValue)
+        {
+            throw new InvalidOperationException(
+                "A technician must be assigned before scheduling the job.");
+        }
+
+        var hasConflict = await _jobs.HasSchedulingConflictAsync(
+            tenantId,
+            job.AssignedTechnicianId.Value,
+            job.Id,
+            startUtc.ToUniversalTime(),
+            endUtc.ToUniversalTime(),
+            cancellationToken);
+
+        if (hasConflict)
+        {
+            throw new InvalidOperationException(
+                "The assigned technician already has another job scheduled during this time.");
+        }
+
+        job.Schedule(startUtc, endUtc);
+
+        await _jobs.SaveChangesAsync(cancellationToken);
+
+        return Map(job);
     }
 
     public Task<ServiceJobResponse?> StartAsync(

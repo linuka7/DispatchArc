@@ -67,6 +67,27 @@ public sealed class ServiceJobRepository : IServiceJobRepository
             .ToListAsync(cancellationToken);
     }
 
+    public Task<bool> HasSchedulingConflictAsync(
+    Guid tenantId,
+    Guid technicianId,
+    Guid excludedJobId,
+    DateTimeOffset startUtc,
+    DateTimeOffset endUtc,
+    CancellationToken cancellationToken)
+{
+    return _database.ServiceJobs.AnyAsync(
+        job =>
+            job.TenantId == tenantId &&
+            job.AssignedTechnicianId == technicianId &&
+            job.Id != excludedJobId &&
+            job.Status != JobStatus.Cancelled &&
+            job.ScheduledStartUtc.HasValue &&
+            job.ScheduledEndUtc.HasValue &&
+            job.ScheduledStartUtc < endUtc &&
+            job.ScheduledEndUtc > startUtc,
+        cancellationToken);
+}
+
     public Task SaveChangesAsync(
         CancellationToken cancellationToken)
     {

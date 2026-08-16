@@ -1,4 +1,4 @@
-﻿using DispatchArc.Domain.Entities;
+using DispatchArc.Domain.Entities;
 using DispatchArc.Domain.Enums;
 
 namespace DispatchArc.Application.Jobs;
@@ -20,6 +20,16 @@ public interface IServiceJobRepository
         string? search,
         CancellationToken cancellationToken);
 
+        Task<bool> HasSchedulingConflictAsync(
+    Guid tenantId,
+    Guid technicianId,
+    Guid excludedJobId,
+    DateTimeOffset startUtc,
+    DateTimeOffset endUtc,
+    CancellationToken cancellationToken);
+
     Task SaveChangesAsync(
         CancellationToken cancellationToken);
+
+
 }
