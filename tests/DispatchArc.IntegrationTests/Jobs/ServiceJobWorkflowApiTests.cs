@@ -106,6 +106,350 @@ public sealed class ServiceJobWorkflowApiTests
     }
 
     [Fact]
+    public async Task ApprovedJob_WithoutTechnician_CannotBeScheduled()
+    {
+        var context = await CreateNewJobAsync();
+
+        await PostActionAsync(
+            context.TenantId,
+            context.JobId,
+            "quote");
+
+        await PostActionAsync(
+            context.TenantId,
+            context.JobId,
+            "approve");
+
+        var startUtc = DateTimeOffset.UtcNow.AddDays(1);
+        var endUtc = startUtc.AddHours(1);
+
+        var response = await _client.PostAsJsonAsync(
+            $"/api/tenants/{context.TenantId}/jobs/" +
+            $"{context.JobId}/schedule",
+            new
+            {
+                startUtc,
+                endUtc
+            });
+
+        Assert.Equal(
+            HttpStatusCode.Conflict,
+            response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Schedule_EndBeforeStart_ReturnsBadRequest()
+    {
+        var context = await CreateNewJobAsync();
+
+        await PostActionAsync(
+            context.TenantId,
+            context.JobId,
+            "quote");
+
+        await PostActionAsync(
+            context.TenantId,
+            context.JobId,
+            "approve");
+
+        var startUtc = DateTimeOffset.UtcNow.AddDays(1);
+        var endUtc = startUtc.AddHours(-1);
+
+        var response = await _client.PostAsJsonAsync(
+            $"/api/tenants/{context.TenantId}/jobs/" +
+            $"{context.JobId}/schedule",
+            new
+            {
+                startUtc,
+                endUtc
+            });
+
+        Assert.Equal(
+            HttpStatusCode.BadRequest,
+            response.StatusCode);
+    }
+
+    [Fact]
+    public async Task AssignTechnician_EmptyId_ReturnsBadRequest()
+    {
+        var context = await CreateNewJobAsync();
+
+        var response = await _client.PostAsJsonAsync(
+            $"/api/tenants/{context.TenantId}/jobs/" +
+            $"{context.JobId}/assign-technician",
+            new
+            {
+                technicianId = Guid.Empty
+            });
+
+        Assert.Equal(
+            HttpStatusCode.BadRequest,
+            response.StatusCode);
+    }
+
+    [Fact]
+    public async Task AssignTechnician_NonTechnician_ReturnsBadRequest()
+    {
+        var context = await CreateNewJobAsync();
+
+        var dispatcherResponse = await _client.PostAsJsonAsync(
+            $"/api/tenants/{context.TenantId}/team-members",
+            new
+            {
+                fullName = "Integration Dispatcher",
+                email = $"dispatcher-{Guid.NewGuid():N}@example.com",
+                password = "Dispatcher#2026Secure",
+                role = "Dispatcher"
+            });
+
+        var dispatcher = await ReadObjectAsync(dispatcherResponse);
+        var dispatcherId = GetId(dispatcher);
+
+        var response = await _client.PostAsJsonAsync(
+            $"/api/tenants/{context.TenantId}/jobs/" +
+            $"{context.JobId}/assign-technician",
+            new
+            {
+                technicianId = dispatcherId
+            });
+
+        Assert.Equal(
+            HttpStatusCode.BadRequest,
+            response.StatusCode);
+    }
+
+    [Fact]
+    public async Task AssignTechnician_FromAnotherTenant_ReturnsBadRequest()
+    {
+        var context = await CreateNewJobAsync();
+
+        var tenantAAuthorization =
+            _client.DefaultRequestHeaders.Authorization;
+
+        var uniqueId = Guid.NewGuid().ToString("N")[..10];
+
+        var tenantBResponse = await _client.PostAsJsonAsync(
+            "/api/tenants",
+            new
+            {
+                name = $"Other Tenant {uniqueId}",
+                slug = $"other-{uniqueId}"
+            });
+
+        var tenantB = await ReadObjectAsync(tenantBResponse);
+        var tenantBId = GetId(tenantB);
+
+        var registerResponse = await _client.PostAsJsonAsync(
+            "/api/auth/register",
+            new
+            {
+                tenantId = tenantBId,
+                fullName = "Other Tenant Owner",
+                email = $"owner-b-{uniqueId}@example.com",
+                password = "OtherTenant#2026Secure"
+            });
+
+        var authentication = await ReadObjectAsync(registerResponse);
+
+        _client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue(
+                "Bearer",
+                authentication["accessToken"]!.GetValue<string>());
+
+        var technicianResponse = await _client.PostAsJsonAsync(
+            $"/api/tenants/{tenantBId}/team-members",
+            new
+            {
+                fullName = "Other Tenant Technician",
+                email = $"tech-b-{uniqueId}@example.com",
+                password = "Technician#2026Secure",
+                role = "Technician"
+            });
+
+        var technician = await ReadObjectAsync(technicianResponse);
+        var technicianId = GetId(technician);
+
+        _client.DefaultRequestHeaders.Authorization =
+            tenantAAuthorization;
+
+        var response = await _client.PostAsJsonAsync(
+            $"/api/tenants/{context.TenantId}/jobs/" +
+            $"{context.JobId}/assign-technician",
+            new
+            {
+                technicianId
+            });
+
+        Assert.Equal(
+            HttpStatusCode.BadRequest,
+            response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Schedule_OverlappingJobsForSameTechnician_ReturnsConflict()
+    {
+        var context = await CreateNewJobAsync();
+
+        var technicianResponse = await _client.PostAsJsonAsync(
+            $"/api/tenants/{context.TenantId}/team-members",
+            new
+            {
+                fullName = "Conflict Test Technician",
+                email = $"conflict-tech-{Guid.NewGuid():N}@example.com",
+                password = "Technician#2026Secure",
+                role = "Technician"
+            });
+
+        var technician = await ReadObjectAsync(technicianResponse);
+        var technicianId = GetId(technician);
+
+        await PostActionAsync(context.TenantId, context.JobId, "quote");
+        await PostActionAsync(context.TenantId, context.JobId, "approve");
+
+        await ReadObjectAsync(await _client.PostAsJsonAsync(
+            $"/api/tenants/{context.TenantId}/jobs/{context.JobId}/assign-technician",
+            new { technicianId }));
+
+        var customerResponse = await _client.PostAsJsonAsync(
+            $"/api/tenants/{context.TenantId}/customers",
+            new
+            {
+                name = "Conflict Test Customer",
+                phone = "+94 77 111 1111",
+                email = $"conflict-{Guid.NewGuid():N}@example.com",
+                city = "Colombo"
+            });
+
+        var customer = await ReadObjectAsync(customerResponse);
+        var customerId = GetId(customer);
+
+        var secondJobResponse = await _client.PostAsJsonAsync(
+            $"/api/tenants/{context.TenantId}/jobs",
+            new
+            {
+                customerId,
+                title = "Second conflict test job",
+                description = "Tests technician scheduling overlap.",
+                priority = "Normal"
+            });
+
+        var secondJob = await ReadObjectAsync(secondJobResponse);
+        var secondJobId = GetId(secondJob);
+
+        await PostActionAsync(context.TenantId, secondJobId, "quote");
+        await PostActionAsync(context.TenantId, secondJobId, "approve");
+
+        await ReadObjectAsync(await _client.PostAsJsonAsync(
+            $"/api/tenants/{context.TenantId}/jobs/{secondJobId}/assign-technician",
+            new { technicianId }));
+
+        var firstStart = DateTimeOffset.UtcNow.AddDays(1);
+        var firstEnd = firstStart.AddHours(2);
+
+        await ReadObjectAsync(await _client.PostAsJsonAsync(
+            $"/api/tenants/{context.TenantId}/jobs/{context.JobId}/schedule",
+            new
+            {
+                startUtc = firstStart,
+                endUtc = firstEnd
+            }));
+
+        var response = await _client.PostAsJsonAsync(
+            $"/api/tenants/{context.TenantId}/jobs/{secondJobId}/schedule",
+            new
+            {
+                startUtc = firstStart.AddHours(1),
+                endUtc = firstEnd.AddHours(1)
+            });
+
+        Assert.Equal(
+            HttpStatusCode.Conflict,
+            response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Schedule_BackToBackJobsForSameTechnician_IsAllowed()
+    {
+        var context = await CreateNewJobAsync();
+
+        var technicianResponse = await _client.PostAsJsonAsync(
+            $"/api/tenants/{context.TenantId}/team-members",
+            new
+            {
+                fullName = "Back To Back Technician",
+                email = $"backtoback-{Guid.NewGuid():N}@example.com",
+                password = "Technician#2026Secure",
+                role = "Technician"
+            });
+
+        var technician = await ReadObjectAsync(technicianResponse);
+        var technicianId = GetId(technician);
+
+        await PostActionAsync(context.TenantId, context.JobId, "quote");
+        await PostActionAsync(context.TenantId, context.JobId, "approve");
+
+        await ReadObjectAsync(await _client.PostAsJsonAsync(
+            $"/api/tenants/{context.TenantId}/jobs/{context.JobId}/assign-technician",
+            new { technicianId }));
+
+        var customerResponse = await _client.PostAsJsonAsync(
+            $"/api/tenants/{context.TenantId}/customers",
+            new
+            {
+                name = "Back To Back Customer",
+                phone = "+94 77 222 2222",
+                email = $"backtoback-{Guid.NewGuid():N}@example.com",
+                city = "Colombo"
+            });
+
+        var customer = await ReadObjectAsync(customerResponse);
+        var customerId = GetId(customer);
+
+        var secondJobResponse = await _client.PostAsJsonAsync(
+            $"/api/tenants/{context.TenantId}/jobs",
+            new
+            {
+                customerId,
+                title = "Back to back second job",
+                description = "Tests boundary scheduling.",
+                priority = "Normal"
+            });
+
+        var secondJob = await ReadObjectAsync(secondJobResponse);
+        var secondJobId = GetId(secondJob);
+
+        await PostActionAsync(context.TenantId, secondJobId, "quote");
+        await PostActionAsync(context.TenantId, secondJobId, "approve");
+
+        await ReadObjectAsync(await _client.PostAsJsonAsync(
+            $"/api/tenants/{context.TenantId}/jobs/{secondJobId}/assign-technician",
+            new { technicianId }));
+
+        var firstStart = DateTimeOffset.UtcNow.AddDays(1);
+        var firstEnd = firstStart.AddHours(2);
+
+        await ReadObjectAsync(await _client.PostAsJsonAsync(
+            $"/api/tenants/{context.TenantId}/jobs/{context.JobId}/schedule",
+            new
+            {
+                startUtc = firstStart,
+                endUtc = firstEnd
+            }));
+
+        var response = await _client.PostAsJsonAsync(
+            $"/api/tenants/{context.TenantId}/jobs/{secondJobId}/schedule",
+            new
+            {
+                startUtc = firstEnd,
+                endUtc = firstEnd.AddHours(2)
+            });
+
+        var scheduled = await ReadObjectAsync(response);
+
+        Assert.Equal("Scheduled", GetStatus(scheduled));
+    }
+
+    [Fact]
     public async Task Job_CannotBeCompletedFromNewStatus()
     {
         var context = await CreateNewJobAsync();
