@@ -18,6 +18,7 @@ public sealed class DispatchArcDbContext : DbContext
     public DbSet<JobLineItem> JobLineItems => Set<JobLineItem>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<InvoiceLineItem> InvoiceLineItems => Set<InvoiceLineItem>();
+    public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<JobNote> JobNotes => Set<JobNote>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
