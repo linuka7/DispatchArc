@@ -190,20 +190,6 @@ public sealed class JobsController : ControllerBase
                 cancellationToken));
     }
 
-    [HttpPost("{jobId:guid}/invoice")]
-    [Authorize(Policy = "FinanceAccess")]
-    public Task<ActionResult<ServiceJobResponse>> Invoice(
-        Guid tenantId,
-        Guid jobId,
-        CancellationToken cancellationToken)
-    {
-        return ExecuteWorkflowActionAsync(() =>
-            _jobService.MarkInvoicedAsync(
-                tenantId,
-                jobId,
-                cancellationToken));
-    }
-
     [HttpPost("{jobId:guid}/cancel")]
     [Authorize(Policy = "DispatchManagement")]
     public Task<ActionResult<ServiceJobResponse>> Cancel(
