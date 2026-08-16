@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json.Nodes;
 using DispatchArc.IntegrationTests.Infrastructure;
@@ -36,6 +36,29 @@ public sealed class ServiceJobWorkflowApiTests
             "approve");
 
         Assert.Equal("Approved", GetStatus(approved));
+
+        var technicianResponse = await _client.PostAsJsonAsync(
+            $"/api/tenants/{context.TenantId}/team-members",
+            new
+            {
+                fullName = "Integration Technician",
+                email = $"tech-{Guid.NewGuid():N}@example.com",
+                password = "Technician#2026Secure",
+                role = "Technician"
+            });
+
+        var technician = await ReadObjectAsync(technicianResponse);
+        var technicianId = GetId(technician);
+
+        var assignResponse = await _client.PostAsJsonAsync(
+            $"/api/tenants/{context.TenantId}/jobs/" +
+            $"{context.JobId}/assign-technician",
+            new
+            {
+                technicianId
+            });
+
+        await ReadObjectAsync(assignResponse);
 
         var startUtc = DateTimeOffset.UtcNow.AddDays(1);
         var endUtc = startUtc.AddHours(2);
