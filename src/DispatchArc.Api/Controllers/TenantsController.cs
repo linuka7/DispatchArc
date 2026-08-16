@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace DispatchArc.Api.Controllers;
 
 [ApiController]
+[Produces("application/json")]
 [Route("api/tenants")]
 public sealed class TenantsController : ControllerBase
 {
@@ -16,6 +17,8 @@ public sealed class TenantsController : ControllerBase
     }
 
     [HttpPost]
+    [ProducesResponseType(typeof(TenantResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<TenantResponse>> Create(
         CreateTenantRequest request,
         CancellationToken cancellationToken)
@@ -42,6 +45,8 @@ public sealed class TenantsController : ControllerBase
     }
 
     [HttpGet("{tenantId:guid}")]
+    [ProducesResponseType(typeof(TenantResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TenantResponse>> GetById(
         Guid tenantId,
         CancellationToken cancellationToken)

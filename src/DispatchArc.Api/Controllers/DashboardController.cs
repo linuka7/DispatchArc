@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace DispatchArc.Api.Controllers;
 
 [ApiController]
+[Produces("application/json")]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(StatusCodes.Status403Forbidden)]
 [Authorize(Policy = "TenantAccess")]
 [Route("api/tenants/{tenantId:guid}/dashboard")]
 public sealed class DashboardController : ControllerBase
@@ -19,6 +22,8 @@ public sealed class DashboardController : ControllerBase
 
     [HttpGet]
     [Authorize(Policy = "OwnerOnly")]
+    [ProducesResponseType(typeof(DashboardMetricsResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<DashboardMetricsResponse>> Get(
         Guid tenantId,
         CancellationToken cancellationToken)

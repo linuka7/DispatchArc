@@ -11,6 +11,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace DispatchArc.Api.Controllers;
 
 [ApiController]
+[Produces("application/json")]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(StatusCodes.Status403Forbidden)]
 [Authorize(Policy = "TenantAccess")]
 [Authorize(Policy = "DispatchManagement")]
 [Route("api/tenants/{tenantId:guid}/team-members")]
@@ -20,6 +23,9 @@ public sealed class TeamMembersController(
     IPasswordHasher<AppUser> passwordHasher) : ControllerBase
 {
     [HttpPost]
+    [ProducesResponseType(typeof(TeamMemberResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<TeamMemberResponse>> Create(
         Guid tenantId,
         CreateTeamMemberRequest request,
@@ -29,34 +35,22 @@ public sealed class TeamMembersController(
             string.IsNullOrWhiteSpace(request.Email) ||
             string.IsNullOrWhiteSpace(request.Password))
         {
-            return BadRequest(new
-            {
-                message = "Full name, email and password are required."
-            });
+            return BadRequest(CreateProblem("Invalid team member request", "Full name, email and password are required.", StatusCodes.Status400BadRequest));
         }
 
         if (!MailAddress.TryCreate(request.Email, out _))
         {
-            return BadRequest(new
-            {
-                message = "Enter a valid email address."
-            });
+            return BadRequest(CreateProblem("Invalid team member request", "Enter a valid email address.", StatusCodes.Status400BadRequest));
         }
 
         if (request.Password.Length < 8)
         {
-            return BadRequest(new
-            {
-                message = "Password must contain at least 8 characters."
-            });
+            return BadRequest(CreateProblem("Invalid team member request", "Password must contain at least 8 characters.", StatusCodes.Status400BadRequest));
         }
 
         if (request.Role == UserRole.Owner)
         {
-            return BadRequest(new
-            {
-                message = "Additional owners cannot be created through this endpoint."
-            });
+            return BadRequest(CreateProblem("Invalid team member request", "Additional owners cannot be created through this endpoint.", StatusCodes.Status400BadRequest));
         }
 
         var existingUser = await users.GetByEmailAsync(
@@ -66,10 +60,7 @@ public sealed class TeamMembersController(
 
         if (existingUser is not null)
         {
-            return Conflict(new
-            {
-                message = "A team member with this email already exists."
-            });
+            return Conflict(CreateProblem("Team member already exists", "A team member with this email already exists.", StatusCodes.Status409Conflict));
         }
 
         var user = new AppUser(
@@ -108,6 +99,7 @@ public sealed class TeamMembersController(
     }
 
     [HttpGet]
+    [ProducesResponseType(typeof(IReadOnlyList<TeamMemberResponse>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<TeamMemberResponse>>> GetAll(
         Guid tenantId,
         CancellationToken cancellationToken)
@@ -120,6 +112,8 @@ public sealed class TeamMembersController(
     }
 
     [HttpGet("{userId:guid}")]
+    [ProducesResponseType(typeof(TeamMemberResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TeamMemberResponse>> GetById(
         Guid tenantId,
         Guid userId,
@@ -134,4 +128,16 @@ public sealed class TeamMembersController(
             ? NotFound()
             : Ok(teamMember);
     }
-}
+
+    private static ProblemDetails CreateProblem(
+        string title,
+        string detail,
+        int status)
+    {
+        return new ProblemDetails
+        {
+            Title = title,
+            Detail = detail,
+            Status = status
+        };
+    }}

@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace DispatchArc.Api.Controllers;
 
 [ApiController]
+[Produces("application/json")]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(StatusCodes.Status403Forbidden)]
 [Authorize(Policy = "TenantAccess")]
 [Route("api/tenants/{tenantId:guid}/invoices/{invoiceId:guid}/payments")]
 public sealed class PaymentsController : ControllerBase
@@ -20,6 +23,8 @@ public sealed class PaymentsController : ControllerBase
 
     [HttpGet]
     [Authorize(Policy = "FinanceAccess")]
+    [ProducesResponseType(typeof(InvoicePaymentSummaryResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<InvoicePaymentSummaryResponse>>
         GetSummary(
             Guid tenantId,
@@ -39,6 +44,10 @@ public sealed class PaymentsController : ControllerBase
 
     [HttpPost]
     [Authorize(Policy = "FinanceAccess")]
+    [ProducesResponseType(typeof(InvoicePaymentSummaryResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<InvoicePaymentSummaryResponse>>
         Record(
             Guid tenantId,

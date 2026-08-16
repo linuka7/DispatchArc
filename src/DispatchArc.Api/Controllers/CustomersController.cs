@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace DispatchArc.Api.Controllers;
 
 [ApiController]
+[Produces("application/json")]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(StatusCodes.Status403Forbidden)]
 [Authorize(Policy = "TenantAccess")]
 [Route("api/tenants/{tenantId:guid}/customers")]
 public sealed class CustomersController : ControllerBase
@@ -19,6 +22,9 @@ public sealed class CustomersController : ControllerBase
 
     [HttpPost]
     [Authorize(Policy = "DispatchManagement")]
+    [ProducesResponseType(typeof(CustomerResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CustomerResponse>> Create(
         Guid tenantId,
         CreateCustomerRequest request,
@@ -54,6 +60,7 @@ public sealed class CustomersController : ControllerBase
     }
 
     [HttpGet]
+    [ProducesResponseType(typeof(IReadOnlyList<CustomerResponse>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<CustomerResponse>>> GetAll(
         Guid tenantId,
         [FromQuery] string? search,
@@ -68,6 +75,8 @@ public sealed class CustomersController : ControllerBase
     }
 
     [HttpGet("{customerId:guid}")]
+    [ProducesResponseType(typeof(CustomerResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CustomerResponse>> GetById(
         Guid tenantId,
         Guid customerId,

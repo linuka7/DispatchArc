@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace DispatchArc.Api.Controllers;
 
 [ApiController]
+[Produces("application/json")]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(StatusCodes.Status403Forbidden)]
 [Authorize(Policy = "TenantAccess")]
 [Route("api/tenants/{tenantId:guid}/jobs/{jobId:guid}/notes")]
 public sealed class JobNotesController : ControllerBase

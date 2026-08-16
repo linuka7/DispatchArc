@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace DispatchArc.Api.Controllers;
 
 [ApiController]
+[Produces("application/json")]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(StatusCodes.Status403Forbidden)]
 [Authorize(Policy = "TenantAccess")]
 [Authorize(Policy = "OperationalAlertsAccess")]
 [Route("api/tenants/{tenantId:guid}/alerts")]
@@ -21,6 +24,8 @@ public sealed class OperationalAlertsController
     }
 
     [HttpGet]
+    [ProducesResponseType(typeof(OperationalAlertFeedResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<OperationalAlertFeedResponse>> Get(
         Guid tenantId,
         CancellationToken cancellationToken)
