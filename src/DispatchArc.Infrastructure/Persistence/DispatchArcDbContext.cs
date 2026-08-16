@@ -15,6 +15,7 @@ public sealed class DispatchArcDbContext : DbContext
     public DbSet<AppUser> Users => Set<AppUser>();
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<ServiceJob> ServiceJobs => Set<ServiceJob>();
+    public DbSet<JobNote> JobNotes => Set<JobNote>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

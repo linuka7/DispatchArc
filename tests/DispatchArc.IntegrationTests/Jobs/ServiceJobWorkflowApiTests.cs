@@ -464,6 +464,211 @@ public sealed class ServiceJobWorkflowApiTests
             response.StatusCode);
     }
 
+    [Fact]
+    public async Task Technician_CannotCreateInternalNote()
+    {
+        var context = await CreateNewJobAsync();
+
+        var technicianEmail =
+            $"note-tech-{Guid.NewGuid():N}@example.com";
+
+        const string technicianPassword =
+            "Technician#2026Secure";
+
+        var createTechnicianResponse =
+            await _client.PostAsJsonAsync(
+                $"/api/tenants/{context.TenantId}/team-members",
+                new
+                {
+                    fullName = "Note Technician",
+                    email = technicianEmail,
+                    password = technicianPassword,
+                    role = "Technician"
+                });
+
+        createTechnicianResponse.EnsureSuccessStatusCode();
+
+        var loginResponse = await _client.PostAsJsonAsync(
+            "/api/auth/login",
+            new
+            {
+                tenantId = context.TenantId,
+                email = technicianEmail,
+                password = technicianPassword
+            });
+
+        var authentication =
+            await ReadObjectAsync(loginResponse);
+
+        _client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue(
+                "Bearer",
+                authentication["accessToken"]!
+                    .GetValue<string>());
+
+        var response = await _client.PostAsJsonAsync(
+            $"/api/tenants/{context.TenantId}/jobs/{context.JobId}/notes",
+            new
+            {
+                type = "InternalNote",
+                content = "Technician should not create this."
+            });
+
+        Assert.Equal(
+            HttpStatusCode.Forbidden,
+            response.StatusCode);
+    }
+    [Fact]
+    public async Task Technician_CannotUpdateUnassignedJob()
+    {
+        var context = await CreateNewJobAsync();
+
+        var technicianEmail =
+            $"unassigned-tech-{Guid.NewGuid():N}@example.com";
+
+        const string technicianPassword =
+            "Technician#2026Secure";
+
+        var createTechnicianResponse =
+            await _client.PostAsJsonAsync(
+                $"/api/tenants/{context.TenantId}/team-members",
+                new
+                {
+                    fullName = "Unassigned Technician",
+                    email = technicianEmail,
+                    password = technicianPassword,
+                    role = "Technician"
+                });
+
+        createTechnicianResponse.EnsureSuccessStatusCode();
+
+        var loginResponse = await _client.PostAsJsonAsync(
+            "/api/auth/login",
+            new
+            {
+                tenantId = context.TenantId,
+                email = technicianEmail,
+                password = technicianPassword
+            });
+
+        var authentication =
+            await ReadObjectAsync(loginResponse);
+
+        _client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue(
+                "Bearer",
+                authentication["accessToken"]!
+                    .GetValue<string>());
+
+        var response = await _client.PostAsJsonAsync(
+            $"/api/tenants/{context.TenantId}/jobs/{context.JobId}/notes",
+            new
+            {
+                type = "TechnicianUpdate",
+                content = "Attempted update on unassigned job."
+            });
+
+        Assert.Equal(
+            HttpStatusCode.Forbidden,
+            response.StatusCode);
+    }
+    [Fact]
+    public async Task AssignedTechnician_CanCreateAndReadTechnicianUpdate()
+    {
+        var context = await CreateNewJobAsync();
+
+        var technicianEmail =
+            $"assigned-tech-{Guid.NewGuid():N}@example.com";
+
+        const string technicianPassword =
+            "Technician#2026Secure";
+
+        var createTechnicianResponse =
+            await _client.PostAsJsonAsync(
+                $"/api/tenants/{context.TenantId}/team-members",
+                new
+                {
+                    fullName = "Assigned Technician",
+                    email = technicianEmail,
+                    password = technicianPassword,
+                    role = "Technician"
+                });
+
+        var technician =
+            await ReadObjectAsync(createTechnicianResponse);
+
+        var technicianId = GetId(technician);
+
+        var assignResponse =
+            await _client.PostAsJsonAsync(
+                $"/api/tenants/{context.TenantId}/jobs/" +
+                $"{context.JobId}/assign-technician",
+                new
+                {
+                    technicianId
+                });
+
+        assignResponse.EnsureSuccessStatusCode();
+
+        var loginResponse = await _client.PostAsJsonAsync(
+            "/api/auth/login",
+            new
+            {
+                tenantId = context.TenantId,
+                email = technicianEmail,
+                password = technicianPassword
+            });
+
+        var authentication =
+            await ReadObjectAsync(loginResponse);
+
+        _client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue(
+                "Bearer",
+                authentication["accessToken"]!
+                    .GetValue<string>());
+
+        var createUpdateResponse =
+            await _client.PostAsJsonAsync(
+                $"/api/tenants/{context.TenantId}/jobs/{context.JobId}/notes",
+                new
+                {
+                    type = "TechnicianUpdate",
+                    content = "Arrived on site and started inspection."
+                });
+
+        var update =
+            await ReadObjectAsync(createUpdateResponse);
+
+        Assert.Equal(
+            "TechnicianUpdate",
+            update["type"]!.GetValue<string>());
+
+        Assert.Equal(
+            "Assigned Technician",
+            update["authorFullName"]!.GetValue<string>());
+
+        var getResponse = await _client.GetAsync(
+            $"/api/tenants/{context.TenantId}/jobs/{context.JobId}/notes");
+
+        getResponse.EnsureSuccessStatusCode();
+
+        var json =
+            await getResponse.Content.ReadAsStringAsync();
+
+        var notes =
+            JsonNode.Parse(json)!.AsArray();
+
+        Assert.Single(notes);
+
+        Assert.Equal(
+            "Arrived on site and started inspection.",
+            notes[0]!["content"]!.GetValue<string>());
+
+        Assert.Equal(
+            "TechnicianUpdate",
+            notes[0]!["type"]!.GetValue<string>());
+    }
     private async Task<(Guid TenantId, Guid JobId)>
         CreateNewJobAsync()
     {

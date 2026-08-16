@@ -25,6 +25,7 @@ builder.Services.AddScoped<TenantService>();
 builder.Services.AddScoped<CustomerService>();
 builder.Services.AddScoped<DispatchArc.Application.TeamMembers.TeamMemberService>();
 builder.Services.AddScoped<ServiceJobService>();
+builder.Services.AddScoped<JobNoteService>();
 
 var connectionString =
     builder.Configuration.GetConnectionString("Database")
@@ -150,5 +151,3 @@ app.Run();
 public partial class Program
 {
 }
-
-
