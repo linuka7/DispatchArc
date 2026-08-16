@@ -26,6 +26,7 @@ builder.Services.AddScoped<CustomerService>();
 builder.Services.AddScoped<DispatchArc.Application.TeamMembers.TeamMemberService>();
 builder.Services.AddScoped<ServiceJobService>();
 builder.Services.AddScoped<JobNoteService>();
+builder.Services.AddScoped<JobLineItemService>();
 
 var connectionString =
     builder.Configuration.GetConnectionString("Database")
