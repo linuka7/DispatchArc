@@ -113,4 +113,42 @@ public sealed class Invoice
     public DateTimeOffset CreatedAtUtc { get; private set; }
 
     public DateTimeOffset UpdatedAtUtc { get; private set; }
+
+    public void UpdatePaymentStatus(
+        decimal amountPaid)
+    {
+        if (Status == InvoiceStatus.Void)
+        {
+            throw new InvalidOperationException(
+                "Payments cannot be applied to a void invoice.");
+        }
+
+        var roundedAmountPaid = decimal.Round(
+            amountPaid,
+            2,
+            MidpointRounding.AwayFromZero);
+
+        if (roundedAmountPaid < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(amountPaid),
+                "Amount paid cannot be negative.");
+        }
+
+        if (roundedAmountPaid > Total)
+        {
+            throw new InvalidOperationException(
+                "The payment would exceed the invoice total.");
+        }
+
+        Status =
+            roundedAmountPaid == 0
+                ? InvoiceStatus.Issued
+                : roundedAmountPaid < Total
+                    ? InvoiceStatus.PartiallyPaid
+                    : InvoiceStatus.Paid;
+
+        UpdatedAtUtc =
+            DateTimeOffset.UtcNow;
+    }
 }

@@ -38,6 +38,18 @@ public sealed class InvoiceRepository
                 cancellationToken);
     }
 
+    public Task<Invoice?> GetForUpdateAsync(
+        Guid tenantId,
+        Guid invoiceId,
+        CancellationToken cancellationToken)
+    {
+        return _database.Invoices
+            .SingleOrDefaultAsync(
+                invoice =>
+                    invoice.TenantId == tenantId &&
+                    invoice.Id == invoiceId,
+                cancellationToken);
+    }
     public Task<Invoice?> GetByJobAsync(
         Guid tenantId,
         Guid serviceJobId,

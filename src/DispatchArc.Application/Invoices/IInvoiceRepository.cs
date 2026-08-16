@@ -13,6 +13,10 @@ public interface IInvoiceRepository
         Guid invoiceId,
         CancellationToken cancellationToken);
 
+    Task<Invoice?> GetForUpdateAsync(
+        Guid tenantId,
+        Guid invoiceId,
+        CancellationToken cancellationToken);
     Task<Invoice?> GetByJobAsync(
         Guid tenantId,
         Guid serviceJobId,
