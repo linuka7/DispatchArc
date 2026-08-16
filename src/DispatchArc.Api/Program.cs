@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using System.Text;
 using DispatchArc.Api.Auth;
 using DispatchArc.Application.Customers;
+using DispatchArc.Application.Dashboard;
 using DispatchArc.Application.Jobs;
 using DispatchArc.Application.Invoices;
 using DispatchArc.Application.Payments;
@@ -31,6 +32,7 @@ builder.Services.AddScoped<JobNoteService>();
 builder.Services.AddScoped<JobLineItemService>();
 builder.Services.AddScoped<InvoiceService>();
 builder.Services.AddScoped<PaymentService>();
+builder.Services.AddScoped<DashboardService>();
 
 var connectionString =
     builder.Configuration.GetConnectionString("Database")
