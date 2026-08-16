@@ -43,7 +43,7 @@ public sealed class PaymentService
             payments);
     }
 
-    public async Task<InvoicePaymentSummaryResponse?>
+    public Task<InvoicePaymentSummaryResponse?>
         RecordAsync(
             Guid tenantId,
             Guid invoiceId,
@@ -53,6 +53,31 @@ public sealed class PaymentService
             DateTimeOffset? paidAtUtc,
             CancellationToken cancellationToken)
     {
+        return _payments.ExecuteInTransactionAsync(
+            transactionCancellationToken =>
+                RecordWithinTransactionAsync(
+                    tenantId,
+                    invoiceId,
+                    amount,
+                    method,
+                    reference,
+                    paidAtUtc,
+                    transactionCancellationToken),
+            cancellationToken);
+    }
+
+    private async Task<InvoicePaymentSummaryResponse?>
+        RecordWithinTransactionAsync(
+            Guid tenantId,
+            Guid invoiceId,
+            decimal amount,
+            PaymentMethod method,
+            string? reference,
+            DateTimeOffset? paidAtUtc,
+            CancellationToken cancellationToken)
+    {
+        // This query acquires a PostgreSQL FOR UPDATE
+        // row lock until this payment transaction commits.
         var invoice =
             await _invoices.GetForUpdateAsync(
                 tenantId,
@@ -95,9 +120,16 @@ public sealed class PaymentService
         }
 
         var paymentDate =
-            (paidAtUtc ?? DateTimeOffset.UtcNow)
-                .ToUniversalTime();
+            (paidAtUtc ??
+                DateTimeOffset.UtcNow)
+            .ToUniversalTime();
 
+        if (paymentDate < invoice.IssuedAtUtc)
+        {
+            throw new ArgumentException(
+                "Payment date cannot be before the invoice issue date.",
+                nameof(paidAtUtc));
+        }
         if (paymentDate >
             DateTimeOffset.UtcNow.AddMinutes(5))
         {
@@ -117,12 +149,14 @@ public sealed class PaymentService
                 ? string.Empty
                 : reference.Trim();
 
-        if (normalizedReference.Length > 0 &&
+        var normalizedReferenceKey =
+            normalizedReference
+                .ToUpperInvariant();
+
+        if (normalizedReferenceKey.Length > 0 &&
             existingPayments.Any(payment =>
-                string.Equals(
-                    payment.Reference,
-                    normalizedReference,
-                    StringComparison.OrdinalIgnoreCase)))
+                payment.NormalizedReference ==
+                    normalizedReferenceKey))
         {
             throw new InvalidOperationException(
                 "A payment with this reference already exists for the invoice.");
@@ -131,13 +165,15 @@ public sealed class PaymentService
         var amountPaid =
             decimal.Round(
                 existingPayments.Sum(
-                    payment => payment.Amount),
+                    payment =>
+                        payment.Amount),
                 2,
                 MidpointRounding.AwayFromZero);
 
         var newAmountPaid =
             decimal.Round(
-                amountPaid + roundedAmount,
+                amountPaid +
+                roundedAmount,
                 2,
                 MidpointRounding.AwayFromZero);
 
@@ -145,7 +181,8 @@ public sealed class PaymentService
         {
             var balanceDue =
                 decimal.Round(
-                    invoice.Total - amountPaid,
+                    invoice.Total -
+                    amountPaid,
                     2,
                     MidpointRounding.AwayFromZero);
 
@@ -176,17 +213,20 @@ public sealed class PaymentService
         invoice.UpdatePaymentStatus(
             newAmountPaid);
 
-        // Payment + invoice status are persisted together
-        // through the shared scoped DbContext.
+        // The payment and invoice state change are saved
+        // while the invoice row lock is still held.
         await _payments.SaveChangesAsync(
             cancellationToken);
 
         var allPayments =
             existingPayments
                 .Append(payment)
-                .OrderBy(item => item.PaidAtUtc)
-                .ThenBy(item => item.CreatedAtUtc)
-                .ThenBy(item => item.Id)
+                .OrderBy(item =>
+                    item.PaidAtUtc)
+                .ThenBy(item =>
+                    item.CreatedAtUtc)
+                .ThenBy(item =>
+                    item.Id)
                 .ToList();
 
         return MapSummary(
@@ -201,22 +241,27 @@ public sealed class PaymentService
     {
         var responses =
             payments
-                .OrderBy(payment => payment.PaidAtUtc)
-                .ThenBy(payment => payment.CreatedAtUtc)
-                .ThenBy(payment => payment.Id)
+                .OrderBy(payment =>
+                    payment.PaidAtUtc)
+                .ThenBy(payment =>
+                    payment.CreatedAtUtc)
+                .ThenBy(payment =>
+                    payment.Id)
                 .Select(MapPayment)
                 .ToList();
 
         var amountPaid =
             decimal.Round(
                 responses.Sum(
-                    payment => payment.Amount),
+                    payment =>
+                        payment.Amount),
                 2,
                 MidpointRounding.AwayFromZero);
 
         var balanceDue =
             decimal.Round(
-                invoice.Total - amountPaid,
+                invoice.Total -
+                amountPaid,
                 2,
                 MidpointRounding.AwayFromZero);
 

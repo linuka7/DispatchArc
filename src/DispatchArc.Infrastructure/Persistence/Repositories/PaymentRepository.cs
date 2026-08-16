@@ -1,3 +1,4 @@
+using System.Data;
 using DispatchArc.Application.Payments;
 using DispatchArc.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,26 @@ public sealed class PaymentRepository
         DispatchArcDbContext database)
     {
         _database = database;
+    }
+
+    public async Task<T> ExecuteInTransactionAsync<T>(
+        Func<CancellationToken, Task<T>> operation,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction =
+            await _database.Database
+                .BeginTransactionAsync(
+                    IsolationLevel.ReadCommitted,
+                    cancellationToken);
+
+        var result =
+            await operation(
+                cancellationToken);
+
+        await transaction.CommitAsync(
+            cancellationToken);
+
+        return result;
     }
 
     public async Task AddAsync(
@@ -35,10 +56,14 @@ public sealed class PaymentRepository
             .Where(payment =>
                 payment.TenantId == tenantId &&
                 payment.InvoiceId == invoiceId)
-            .OrderBy(payment => payment.PaidAtUtc)
-            .ThenBy(payment => payment.CreatedAtUtc)
-            .ThenBy(payment => payment.Id)
-            .ToListAsync(cancellationToken);
+            .OrderBy(payment =>
+                payment.PaidAtUtc)
+            .ThenBy(payment =>
+                payment.CreatedAtUtc)
+            .ThenBy(payment =>
+                payment.Id)
+            .ToListAsync(
+                cancellationToken);
     }
 
     public Task SaveChangesAsync(

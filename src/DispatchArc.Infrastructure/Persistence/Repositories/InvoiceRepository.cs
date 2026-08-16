@@ -43,13 +43,26 @@ public sealed class InvoiceRepository
         Guid invoiceId,
         CancellationToken cancellationToken)
     {
+        if (_database.Database.CurrentTransaction is null)
+        {
+            throw new InvalidOperationException(
+                "Invoice row locking requires an active database transaction.");
+        }
+
         return _database.Invoices
+            .FromSqlInterpolated(
+                $"""
+                SELECT *
+                FROM invoices
+                WHERE "TenantId" = {tenantId}
+                  AND "Id" = {invoiceId}
+                FOR UPDATE
+                """)
+            .AsTracking()
             .SingleOrDefaultAsync(
-                invoice =>
-                    invoice.TenantId == tenantId &&
-                    invoice.Id == invoiceId,
                 cancellationToken);
     }
+
     public Task<Invoice?> GetByJobAsync(
         Guid tenantId,
         Guid serviceJobId,

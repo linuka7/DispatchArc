@@ -330,6 +330,161 @@ public sealed class PaymentApiTests
     }
 
     [Fact]
+    public async Task ConcurrentPaymentsCannotOverpayInvoice()
+    {
+        var context =
+            await CreateInvoiceAsync(
+                invoiceTotal: 10000m);
+
+        var gate =
+            new TaskCompletionSource<bool>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+
+        async Task<HttpResponseMessage> SendPaymentAsync(
+            string reference)
+        {
+            await gate.Task;
+
+            return await _client.PostAsJsonAsync(
+                $"/api/tenants/{context.TenantId}/invoices/{context.InvoiceId}/payments",
+                new
+                {
+                    amount = 6000m,
+                    method = "BankTransfer",
+                    reference
+                });
+        }
+
+        var firstTask =
+            SendPaymentAsync(
+                "CONCURRENT-A");
+
+        var secondTask =
+            SendPaymentAsync(
+                "CONCURRENT-B");
+
+        gate.SetResult(true);
+
+        var responses =
+            await Task.WhenAll(
+                firstTask,
+                secondTask);
+
+        Assert.Equal(
+            1,
+            responses.Count(response =>
+                response.StatusCode ==
+                    HttpStatusCode.OK));
+
+        Assert.Equal(
+            1,
+            responses.Count(response =>
+                response.StatusCode ==
+                    HttpStatusCode.Conflict));
+
+        var summaryResponse =
+            await _client.GetAsync(
+                $"/api/tenants/{context.TenantId}/invoices/{context.InvoiceId}/payments");
+
+        var summary =
+            await ReadObjectAsync(
+                summaryResponse);
+
+        Assert.Equal(
+            6000m,
+            GetDecimal(
+                summary,
+                "amountPaid"));
+
+        Assert.Equal(
+            4000m,
+            GetDecimal(
+                summary,
+                "balanceDue"));
+
+        Assert.Equal(
+            "PartiallyPaid",
+            GetString(
+                summary,
+                "status"));
+
+        Assert.Single(
+            summary["payments"]!
+                .AsArray());
+    }
+
+    [Fact]
+    public async Task ConcurrentDuplicatePaymentReferenceIsRejected()
+    {
+        var context =
+            await CreateInvoiceAsync(
+                invoiceTotal: 10000m);
+
+        var gate =
+            new TaskCompletionSource<bool>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+
+        async Task<HttpResponseMessage> SendPaymentAsync(
+            string reference)
+        {
+            await gate.Task;
+
+            return await _client.PostAsJsonAsync(
+                $"/api/tenants/{context.TenantId}/invoices/{context.InvoiceId}/payments",
+                new
+                {
+                    amount = 1000m,
+                    method = "BankTransfer",
+                    reference
+                });
+        }
+
+        var firstTask =
+            SendPaymentAsync(
+                "RACE-REFERENCE");
+
+        var secondTask =
+            SendPaymentAsync(
+                "race-reference");
+
+        gate.SetResult(true);
+
+        var responses =
+            await Task.WhenAll(
+                firstTask,
+                secondTask);
+
+        Assert.Equal(
+            1,
+            responses.Count(response =>
+                response.StatusCode ==
+                    HttpStatusCode.OK));
+
+        Assert.Equal(
+            1,
+            responses.Count(response =>
+                response.StatusCode ==
+                    HttpStatusCode.Conflict));
+
+        var summaryResponse =
+            await _client.GetAsync(
+                $"/api/tenants/{context.TenantId}/invoices/{context.InvoiceId}/payments");
+
+        var summary =
+            await ReadObjectAsync(
+                summaryResponse);
+
+        Assert.Equal(
+            1000m,
+            GetDecimal(
+                summary,
+                "amountPaid"));
+
+        Assert.Single(
+            summary["payments"]!
+                .AsArray());
+    }
+    [Fact]
     public async Task PaymentLookupIsTenantScoped()
     {
         var first =
@@ -349,6 +504,56 @@ public sealed class PaymentApiTests
             response.StatusCode);
     }
 
+    [Fact]
+    public async Task PaymentBeforeInvoiceIssueDateReturnsBadRequest()
+    {
+        var context =
+            await CreateInvoiceAsync(
+                invoiceTotal: 5000m);
+
+        var response =
+            await _client.PostAsJsonAsync(
+                $"/api/tenants/{context.TenantId}/invoices/{context.InvoiceId}/payments",
+                new
+                {
+                    amount =
+                        1000m,
+                    method =
+                        "BankTransfer",
+                    reference =
+                        "OLD-PAYMENT-DATE",
+                    paidAtUtc =
+                        DateTimeOffset.UtcNow.AddYears(-1)
+                });
+
+        Assert.Equal(
+            HttpStatusCode.BadRequest,
+            response.StatusCode);
+
+        var summaryResponse =
+            await _client.GetAsync(
+                $"/api/tenants/{context.TenantId}/invoices/{context.InvoiceId}/payments");
+
+        var summary =
+            await ReadObjectAsync(
+                summaryResponse);
+
+        Assert.Equal(
+            0m,
+            GetDecimal(
+                summary,
+                "amountPaid"));
+
+        Assert.Equal(
+            5000m,
+            GetDecimal(
+                summary,
+                "balanceDue"));
+
+        Assert.Empty(
+            summary["payments"]!
+                .AsArray());
+    }
     private async Task<(
         Guid TenantId,
         Guid InvoiceId)> CreateInvoiceAsync(

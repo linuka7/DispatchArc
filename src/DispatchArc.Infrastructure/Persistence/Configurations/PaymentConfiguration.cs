@@ -12,45 +12,72 @@ public sealed class PaymentConfiguration
     {
         builder.ToTable("payments");
 
-        builder.HasKey(payment => payment.Id);
+        builder.HasKey(
+            payment => payment.Id);
 
-        builder.Property(payment => payment.PaymentNumber)
+        builder.Property(
+                payment => payment.PaymentNumber)
             .HasMaxLength(50)
             .IsRequired();
 
-        builder.Property(payment => payment.Amount)
+        builder.Property(
+                payment => payment.Amount)
             .HasPrecision(18, 2)
             .IsRequired();
 
-        builder.Property(payment => payment.Method)
+        builder.Property(
+                payment => payment.Method)
             .IsRequired();
 
-        builder.Property(payment => payment.Reference)
+        builder.Property(
+                payment => payment.Reference)
+            .HasMaxLength(150)
+            .IsRequired();
+
+        builder.Property(
+                payment => payment.NormalizedReference)
             .HasMaxLength(150)
             .IsRequired();
 
         builder.HasOne<Tenant>()
             .WithMany()
-            .HasForeignKey(payment => payment.TenantId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .HasForeignKey(
+                payment => payment.TenantId)
+            .OnDelete(
+                DeleteBehavior.Restrict);
 
         builder.HasOne<Invoice>()
             .WithMany()
-            .HasForeignKey(payment => payment.InvoiceId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .HasForeignKey(
+                payment => payment.InvoiceId)
+            .OnDelete(
+                DeleteBehavior.Restrict);
 
-        builder.HasIndex(payment => new
-        {
-            payment.TenantId,
-            payment.PaymentNumber
-        })
-        .IsUnique();
+        builder.HasIndex(
+                payment => new
+                {
+                    payment.TenantId,
+                    payment.PaymentNumber
+                })
+            .IsUnique();
 
-        builder.HasIndex(payment => new
-        {
-            payment.TenantId,
-            payment.InvoiceId,
-            payment.PaidAtUtc
-        });
+        builder.HasIndex(
+                payment => new
+                {
+                    payment.TenantId,
+                    payment.InvoiceId,
+                    payment.NormalizedReference
+                })
+            .IsUnique()
+            .HasFilter(
+                "\"NormalizedReference\" <> ''");
+
+        builder.HasIndex(
+            payment => new
+            {
+                payment.TenantId,
+                payment.InvoiceId,
+                payment.PaidAtUtc
+            });
     }
 }
