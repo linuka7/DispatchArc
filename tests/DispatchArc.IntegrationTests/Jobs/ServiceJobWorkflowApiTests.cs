@@ -23,6 +23,17 @@ public sealed class ServiceJobWorkflowApiTests
     {
         var context = await CreateNewJobAsync();
 
+        var pricingResponse =
+            await _client.PostAsJsonAsync(
+                $"/api/tenants/{context.TenantId}/jobs/{context.JobId}/quote/line-items",
+                new
+                {
+                    description = "Full workflow service",
+                    quantity = 1m,
+                    unitPrice = 5000m
+                });
+
+        pricingResponse.EnsureSuccessStatusCode();
         var quoted = await PostActionAsync(
             context.TenantId,
             context.JobId,
@@ -90,13 +101,23 @@ public sealed class ServiceJobWorkflowApiTests
 
         Assert.Equal("Completed", GetStatus(completed));
 
-        var invoiced = await PostActionAsync(
-            context.TenantId,
-            context.JobId,
-            "invoice");
+        var invoiceResponse =
+            await _client.PostAsJsonAsync(
+                $"/api/tenants/{context.TenantId}/jobs/{context.JobId}/invoice",
+                new
+                {
+                    dueAtUtc =
+                        DateTimeOffset.UtcNow.AddDays(30)
+                });
 
-        Assert.Equal("Invoiced", GetStatus(invoiced));
+        var invoice =
+            await ReadObjectAsync(
+                invoiceResponse);
 
+        Assert.Equal(
+            "Issued",
+            invoice["status"]!
+                .GetValue<string>());
         var finalResponse = await _client.GetAsync(
             $"/api/tenants/{context.TenantId}/jobs/{context.JobId}");
 

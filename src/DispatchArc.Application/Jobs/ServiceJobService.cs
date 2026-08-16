@@ -1,4 +1,4 @@
-﻿using DispatchArc.Application.Auth;
+using DispatchArc.Application.Auth;
 using DispatchArc.Application.Customers;
 using DispatchArc.Domain.Entities;
 using DispatchArc.Domain.Enums;
@@ -225,18 +225,6 @@ public sealed class ServiceJobService
             tenantId,
             jobId,
             job => job.Complete(),
-            cancellationToken);
-    }
-
-    public Task<ServiceJobResponse?> MarkInvoicedAsync(
-        Guid tenantId,
-        Guid jobId,
-        CancellationToken cancellationToken)
-    {
-        return ApplyWorkflowActionAsync(
-            tenantId,
-            jobId,
-            job => job.MarkInvoiced(),
             cancellationToken);
     }
 

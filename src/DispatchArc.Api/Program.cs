@@ -5,6 +5,7 @@ using System.Text;
 using DispatchArc.Api.Auth;
 using DispatchArc.Application.Customers;
 using DispatchArc.Application.Jobs;
+using DispatchArc.Application.Invoices;
 using DispatchArc.Application.Tenants;
 using DispatchArc.Domain.Entities;
 using DispatchArc.Domain.Enums;
@@ -27,6 +28,7 @@ builder.Services.AddScoped<DispatchArc.Application.TeamMembers.TeamMemberService
 builder.Services.AddScoped<ServiceJobService>();
 builder.Services.AddScoped<JobNoteService>();
 builder.Services.AddScoped<JobLineItemService>();
+builder.Services.AddScoped<InvoiceService>();
 
 var connectionString =
     builder.Configuration.GetConnectionString("Database")
