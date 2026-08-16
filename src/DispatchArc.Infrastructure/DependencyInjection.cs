@@ -1,3 +1,4 @@
+using DispatchArc.Application.Alerts;
 using DispatchArc.Application.Auth;
 using DispatchArc.Application.Customers;
 using DispatchArc.Application.Dashboard;
@@ -31,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<IInvoiceLineItemRepository, InvoiceLineItemRepository>();
         services.AddScoped<IPaymentRepository, PaymentRepository>();
         services.AddScoped<IDashboardRepository, DashboardRepository>();
+        services.AddScoped<IOperationalAlertRepository, OperationalAlertRepository>();
         services.AddScoped<IAppUserRepository, AppUserRepository>();
 
         return services;

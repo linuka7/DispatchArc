@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Text.Json.Serialization;
 using System.Text;
 using DispatchArc.Api.Auth;
+using DispatchArc.Application.Alerts;
 using DispatchArc.Application.Customers;
 using DispatchArc.Application.Dashboard;
 using DispatchArc.Application.Jobs;
@@ -33,6 +34,7 @@ builder.Services.AddScoped<JobLineItemService>();
 builder.Services.AddScoped<InvoiceService>();
 builder.Services.AddScoped<PaymentService>();
 builder.Services.AddScoped<DashboardService>();
+builder.Services.AddScoped<OperationalAlertService>();
 
 var connectionString =
     builder.Configuration.GetConnectionString("Database")
@@ -115,6 +117,12 @@ builder.Services.AddAuthorization(options =>
         "FinanceAccess",
         policy => policy.RequireRole(
             nameof(UserRole.Owner),
+            nameof(UserRole.Finance)));
+    options.AddPolicy(
+        "OperationalAlertsAccess",
+        policy => policy.RequireRole(
+            nameof(UserRole.Owner),
+            nameof(UserRole.Dispatcher),
             nameof(UserRole.Finance)));
 });
 
