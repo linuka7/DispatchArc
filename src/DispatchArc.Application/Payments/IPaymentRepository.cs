@@ -4,6 +4,10 @@ namespace DispatchArc.Application.Payments;
 
 public interface IPaymentRepository
 {
+    Task<T> ExecuteInTransactionAsync<T>(
+        Func<CancellationToken, Task<T>> operation,
+        CancellationToken cancellationToken);
+
     Task AddAsync(
         Payment payment,
         CancellationToken cancellationToken);

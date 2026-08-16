@@ -62,6 +62,7 @@ builder.Services.Configure<JwtOptions>(
     builder.Configuration.GetSection(JwtOptions.SectionName));
 
 builder.Services.AddScoped<JwtTokenService>();
+builder.Services.AddScoped<CurrentUserTokenValidator>();
 
 builder.Services.AddScoped<
     IPasswordHasher<AppUser>,
@@ -85,6 +86,33 @@ builder.Services
                 NameClaimType = System.Security.Claims.ClaimTypes.Name,
                 RoleClaimType = System.Security.Claims.ClaimTypes.Role,
                 ClockSkew = TimeSpan.FromSeconds(30)
+            };
+
+        options.Events =
+            new JwtBearerEvents
+            {
+                OnTokenValidated =
+                    async context =>
+                    {
+                        var validator =
+                            context.HttpContext
+                                .RequestServices
+                                .GetRequiredService<
+                                    CurrentUserTokenValidator>();
+
+                        var failureReason =
+                            await validator
+                                .GetFailureReasonAsync(
+                                    context.Principal,
+                                    context.HttpContext
+                                        .RequestAborted);
+
+                        if (failureReason is not null)
+                        {
+                            context.Fail(
+                                failureReason);
+                        }
+                    }
             };
     });
 

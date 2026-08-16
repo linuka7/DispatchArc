@@ -41,10 +41,11 @@ public sealed class Payment
                 nameof(paymentNumber));
         }
 
-        var roundedAmount = decimal.Round(
-            amount,
-            2,
-            MidpointRounding.AwayFromZero);
+        var roundedAmount =
+            decimal.Round(
+                amount,
+                2,
+                MidpointRounding.AwayFromZero);
 
         if (roundedAmount <= 0)
         {
@@ -60,10 +61,25 @@ public sealed class Payment
                 "Payment method is invalid.");
         }
 
-        if (reference?.Trim().Length > 150)
+        var cleanedReference =
+            string.IsNullOrWhiteSpace(reference)
+                ? string.Empty
+                : reference.Trim();
+
+        if (cleanedReference.Length > 150)
         {
             throw new ArgumentException(
                 "Payment reference cannot exceed 150 characters.",
+                nameof(reference));
+        }
+
+        var normalizedReference =
+            cleanedReference.ToUpperInvariant();
+
+        if (normalizedReference.Length > 150)
+        {
+            throw new ArgumentException(
+                "Normalized payment reference cannot exceed 150 characters.",
                 nameof(reference));
         }
 
@@ -79,15 +95,18 @@ public sealed class Payment
         InvoiceId = invoiceId;
 
         PaymentNumber =
-            paymentNumber.Trim().ToUpperInvariant();
+            paymentNumber
+                .Trim()
+                .ToUpperInvariant();
 
         Amount = roundedAmount;
         Method = method;
 
         Reference =
-            string.IsNullOrWhiteSpace(reference)
-                ? string.Empty
-                : reference.Trim();
+            cleanedReference;
+
+        NormalizedReference =
+            normalizedReference;
 
         PaidAtUtc =
             paidAtUtc.ToUniversalTime();
@@ -110,6 +129,9 @@ public sealed class Payment
     public PaymentMethod Method { get; private set; }
 
     public string Reference { get; private set; } =
+        string.Empty;
+
+    public string NormalizedReference { get; private set; } =
         string.Empty;
 
     public DateTimeOffset PaidAtUtc { get; private set; }

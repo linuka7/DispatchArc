@@ -237,6 +237,87 @@ public sealed class JobQuoteApiTests
             blankDescriptionResponse.StatusCode);
     }
 
+    [Fact]
+    public async Task JobLineItem_UnsupportedPrecisionReturnsBadRequest()
+    {
+        var context =
+            await CreateNewJobAsync();
+
+        var quantityResponse =
+            await _client.PostAsJsonAsync(
+                $"/api/tenants/{context.TenantId}/jobs/{context.JobId}/quote/line-items",
+                new
+                {
+                    description =
+                        "Too precise quantity",
+                    quantity =
+                        1.0001m,
+                    unitPrice =
+                        1000m
+                });
+
+        Assert.Equal(
+            HttpStatusCode.BadRequest,
+            quantityResponse.StatusCode);
+
+        var priceResponse =
+            await _client.PostAsJsonAsync(
+                $"/api/tenants/{context.TenantId}/jobs/{context.JobId}/quote/line-items",
+                new
+                {
+                    description =
+                        "Too precise price",
+                    quantity =
+                        1m,
+                    unitPrice =
+                        1000.001m
+                });
+
+        Assert.Equal(
+            HttpStatusCode.BadRequest,
+            priceResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task JobLineItem_UnsupportedMagnitudeReturnsBadRequest()
+    {
+        var context =
+            await CreateNewJobAsync();
+
+        var quantityResponse =
+            await _client.PostAsJsonAsync(
+                $"/api/tenants/{context.TenantId}/jobs/{context.JobId}/quote/line-items",
+                new
+                {
+                    description =
+                        "Quantity beyond database range",
+                    quantity =
+                        1000000000000000m,
+                    unitPrice =
+                        1m
+                });
+
+        Assert.Equal(
+            HttpStatusCode.BadRequest,
+            quantityResponse.StatusCode);
+
+        var priceResponse =
+            await _client.PostAsJsonAsync(
+                $"/api/tenants/{context.TenantId}/jobs/{context.JobId}/quote/line-items",
+                new
+                {
+                    description =
+                        "Price beyond database range",
+                    quantity =
+                        1m,
+                    unitPrice =
+                        10000000000000000m
+                });
+
+        Assert.Equal(
+            HttpStatusCode.BadRequest,
+            priceResponse.StatusCode);
+    }
     private async Task<(Guid TenantId, Guid JobId)>
         CreateNewJobAsync()
     {
