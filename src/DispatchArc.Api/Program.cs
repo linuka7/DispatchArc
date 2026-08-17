@@ -175,6 +175,23 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
+if (args.Contains(
+        "--migrate",
+        StringComparer.OrdinalIgnoreCase))
+{
+    await using var scope =
+        app.Services.CreateAsyncScope();
+
+    var database =
+        scope.ServiceProvider
+            .GetRequiredService<
+                DispatchArcDbContext>();
+
+    await database.Database.MigrateAsync();
+
+    return;
+}
+
 app.UseDispatchArcSwagger();
 
 app.UseDispatchArcProductionHosting();
