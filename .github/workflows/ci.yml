@@ -63,3 +63,5 @@ jobs:
       - name: Run tests
         run: dotnet test DispatchArc.sln --configuration Release --no-build --logger "console;verbosity=normal"
 
+      - name: Build production container
+        run: docker build --file Dockerfile --tag dispatcharc-api:ci .

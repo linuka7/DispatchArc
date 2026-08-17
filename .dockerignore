@@ -1,0 +1,16 @@
+.git
+.github
+.vs
+.vscode
+**/bin
+**/obj
+tests
+docs
+artifacts
+.env
+.env.*
+production.env
+*.user
+*.suo
+compose.yml
+README.md
