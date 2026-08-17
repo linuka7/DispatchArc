@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace DispatchArc.Api.Controllers;
 
 [ApiController]
+[Produces("application/json")]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(StatusCodes.Status403Forbidden)]
 [Authorize(Policy = "TenantAccess")]
 [Route("api/tenants/{tenantId:guid}/jobs")]
 public sealed class JobsController : ControllerBase
@@ -20,6 +23,9 @@ public sealed class JobsController : ControllerBase
 
     [HttpPost]
     [Authorize(Policy = "DispatchManagement")]
+    [ProducesResponseType(typeof(ServiceJobResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ServiceJobResponse>> Create(
         Guid tenantId,
         CreateServiceJobRequest request,
@@ -63,6 +69,7 @@ public sealed class JobsController : ControllerBase
     }
 
     [HttpGet]
+    [ProducesResponseType(typeof(IReadOnlyList<ServiceJobResponse>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<ServiceJobResponse>>> GetAll(
         Guid tenantId,
         [FromQuery] JobStatus? status,
@@ -79,6 +86,8 @@ public sealed class JobsController : ControllerBase
     }
 
     [HttpGet("{jobId:guid}")]
+    [ProducesResponseType(typeof(ServiceJobResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ServiceJobResponse>> GetById(
         Guid tenantId,
         Guid jobId,
@@ -94,6 +103,10 @@ public sealed class JobsController : ControllerBase
 
     [HttpPost("{jobId:guid}/quote")]
     [Authorize(Policy = "DispatchManagement")]
+    [ProducesResponseType(typeof(ServiceJobResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public Task<ActionResult<ServiceJobResponse>> Quote(
         Guid tenantId,
         Guid jobId,
@@ -108,6 +121,10 @@ public sealed class JobsController : ControllerBase
 
     [HttpPost("{jobId:guid}/approve")]
     [Authorize(Policy = "DispatchManagement")]
+    [ProducesResponseType(typeof(ServiceJobResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public Task<ActionResult<ServiceJobResponse>> Approve(
         Guid tenantId,
         Guid jobId,
@@ -122,6 +139,10 @@ public sealed class JobsController : ControllerBase
 
     [HttpPost("{jobId:guid}/assign-technician")]
     [Authorize(Policy = "DispatchManagement")]
+    [ProducesResponseType(typeof(ServiceJobResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public Task<ActionResult<ServiceJobResponse>> AssignTechnician(
         Guid tenantId,
         Guid jobId,
@@ -147,6 +168,10 @@ public sealed class JobsController : ControllerBase
     }
     [HttpPost("{jobId:guid}/schedule")]
     [Authorize(Policy = "DispatchManagement")]
+    [ProducesResponseType(typeof(ServiceJobResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public Task<ActionResult<ServiceJobResponse>> Schedule(
         Guid tenantId,
         Guid jobId,
@@ -164,6 +189,10 @@ public sealed class JobsController : ControllerBase
 
     [HttpPost("{jobId:guid}/start")]
     [Authorize(Policy = "TechnicianAccess")]
+    [ProducesResponseType(typeof(ServiceJobResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public Task<ActionResult<ServiceJobResponse>> Start(
         Guid tenantId,
         Guid jobId,
@@ -178,6 +207,10 @@ public sealed class JobsController : ControllerBase
 
     [HttpPost("{jobId:guid}/complete")]
     [Authorize(Policy = "TechnicianAccess")]
+    [ProducesResponseType(typeof(ServiceJobResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public Task<ActionResult<ServiceJobResponse>> Complete(
         Guid tenantId,
         Guid jobId,
@@ -192,6 +225,10 @@ public sealed class JobsController : ControllerBase
 
     [HttpPost("{jobId:guid}/cancel")]
     [Authorize(Policy = "DispatchManagement")]
+    [ProducesResponseType(typeof(ServiceJobResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public Task<ActionResult<ServiceJobResponse>> Cancel(
         Guid tenantId,
         Guid jobId,

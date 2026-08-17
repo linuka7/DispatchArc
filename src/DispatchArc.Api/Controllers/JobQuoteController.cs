@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace DispatchArc.Api.Controllers;
 
 [ApiController]
+[Produces("application/json")]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(StatusCodes.Status403Forbidden)]
 [Authorize(Policy = "TenantAccess")]
 [Route("api/tenants/{tenantId:guid}/jobs/{jobId:guid}/quote")]
 public sealed class JobQuoteController : ControllerBase
@@ -20,6 +23,8 @@ public sealed class JobQuoteController : ControllerBase
 
     [HttpGet]
     [Authorize(Policy = "DispatchManagement")]
+    [ProducesResponseType(typeof(JobQuoteResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<JobQuoteResponse>> GetQuote(
         Guid tenantId,
         Guid jobId,
@@ -38,6 +43,10 @@ public sealed class JobQuoteController : ControllerBase
 
     [HttpPost("line-items")]
     [Authorize(Policy = "DispatchManagement")]
+    [ProducesResponseType(typeof(JobLineItemResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<JobLineItemResponse>> AddLineItem(
         Guid tenantId,
         Guid jobId,
@@ -84,6 +93,10 @@ public sealed class JobQuoteController : ControllerBase
 
     [HttpPut("line-items/{lineItemId:guid}")]
     [Authorize(Policy = "DispatchManagement")]
+    [ProducesResponseType(typeof(JobLineItemResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<JobLineItemResponse>> UpdateLineItem(
         Guid tenantId,
         Guid jobId,
@@ -125,6 +138,9 @@ public sealed class JobQuoteController : ControllerBase
 
     [HttpDelete("line-items/{lineItemId:guid}")]
     [Authorize(Policy = "DispatchManagement")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> DeleteLineItem(
         Guid tenantId,
         Guid jobId,

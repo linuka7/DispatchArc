@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Mvc;
+using DispatchArc.Api.OpenApi;
 using DispatchArc.Api.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using System.Text.Json.Serialization;
@@ -22,8 +24,32 @@ using Microsoft.IdentityModel.Tokens;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
-builder.Services.AddOpenApi();
+builder.Services.AddDispatchArcSwagger();
 builder.Services.AddProblemDetails();
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory =
+        context =>
+        {
+            var problem =
+                new ValidationProblemDetails(
+                    context.ModelState)
+                {
+                    Title =
+                        "Request validation failed",
+                    Detail =
+                        "One or more request values are invalid.",
+                    Status =
+                        StatusCodes.Status400BadRequest,
+                    Instance =
+                        context.HttpContext
+                            .Request.Path
+                };
+
+            return new BadRequestObjectResult(
+                problem);
+        };
+});
 
 builder.Services.AddScoped<TenantService>();
 builder.Services.AddScoped<CustomerService>();
@@ -156,10 +182,7 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+app.UseDispatchArcSwagger();
 
 app.UseHttpsRedirection();
 

@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace DispatchArc.Api.Controllers;
 
 [ApiController]
+[Produces("application/json")]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 [Route("api/auth")]
 [Authorize]
 public sealed class CurrentUserController : ControllerBase

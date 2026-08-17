@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace DispatchArc.Api.Controllers;
 
 [ApiController]
+[Produces("application/json")]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(StatusCodes.Status403Forbidden)]
 [Authorize(Policy = "TenantAccess")]
 [Route("api/tenants/{tenantId:guid}")]
 public sealed class InvoicesController : ControllerBase
@@ -20,6 +23,10 @@ public sealed class InvoicesController : ControllerBase
 
     [HttpPost("jobs/{jobId:guid}/invoice")]
     [Authorize(Policy = "FinanceAccess")]
+    [ProducesResponseType(typeof(InvoiceResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<InvoiceResponse>> Create(
         Guid tenantId,
         Guid jobId,
@@ -69,6 +76,8 @@ public sealed class InvoicesController : ControllerBase
 
     [HttpGet("jobs/{jobId:guid}/invoice")]
     [Authorize(Policy = "FinanceAccess")]
+    [ProducesResponseType(typeof(InvoiceResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<InvoiceResponse>> GetByJob(
         Guid tenantId,
         Guid jobId,
@@ -87,6 +96,8 @@ public sealed class InvoicesController : ControllerBase
 
     [HttpGet("invoices/{invoiceId:guid}")]
     [Authorize(Policy = "FinanceAccess")]
+    [ProducesResponseType(typeof(InvoiceResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<InvoiceResponse>> GetById(
         Guid tenantId,
         Guid invoiceId,
