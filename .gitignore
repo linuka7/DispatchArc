@@ -482,3 +482,10 @@ $RECYCLE.BIN/
 *.swp
 
 .env
+
+# DispatchArc local / production secret files
+.env.local
+.env.production
+production.env
+secrets.json
+appsettings.Local.json

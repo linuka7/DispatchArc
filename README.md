@@ -304,3 +304,13 @@ A dispatcher-facing frontend/dashboard is a separate future phase.
 ## License
 
 No open-source license has been declared for this repository.
+## Production deployment
+
+Production configuration, trusted reverse-proxy handling,
+health/readiness behavior and secret requirements are documented in:
+
+    docs/PRODUCTION.md
+
+A non-secret environment-variable template is available at:
+
+    production.env.example

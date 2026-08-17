@@ -20,22 +20,29 @@ public sealed class PaymentRepository
         Func<CancellationToken, Task<T>> operation,
         CancellationToken cancellationToken)
     {
-        await using var transaction =
-            await _database.Database
-                .BeginTransactionAsync(
-                    IsolationLevel.ReadCommitted,
+        var executionStrategy =
+            _database.Database
+                .CreateExecutionStrategy();
+
+        return await executionStrategy.ExecuteAsync(
+            async () =>
+            {
+                await using var transaction =
+                    await _database.Database
+                        .BeginTransactionAsync(
+                            IsolationLevel.ReadCommitted,
+                            cancellationToken);
+
+                var result =
+                    await operation(
+                        cancellationToken);
+
+                await transaction.CommitAsync(
                     cancellationToken);
 
-        var result =
-            await operation(
-                cancellationToken);
-
-        await transaction.CommitAsync(
-            cancellationToken);
-
-        return result;
+                return result;
+            });
     }
-
     public async Task AddAsync(
         Payment payment,
         CancellationToken cancellationToken)
