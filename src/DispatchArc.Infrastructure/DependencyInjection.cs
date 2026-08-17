@@ -18,10 +18,26 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
-        string connectionString)
+        string connectionString,
+        bool enableRetryOnFailure = false)
     {
-        services.AddDbContext<DispatchArcDbContext>(options =>
-            options.UseNpgsql(connectionString));
+        services.AddDbContext<DispatchArcDbContext>(
+            options =>
+                options.UseNpgsql(
+                    connectionString,
+                    npgsqlOptions =>
+                    {
+                        npgsqlOptions.CommandTimeout(30);
+
+                        if (enableRetryOnFailure)
+                        {
+                            npgsqlOptions.EnableRetryOnFailure(
+                                maxRetryCount: 5,
+                                maxRetryDelay:
+                                    TimeSpan.FromSeconds(10),
+                                errorCodesToAdd: null);
+                        }
+                    }));
 
         services.AddScoped<ITenantRepository, TenantRepository>();
         services.AddScoped<ICustomerRepository, CustomerRepository>();

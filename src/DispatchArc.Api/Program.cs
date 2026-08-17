@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using DispatchArc.Api.OpenApi;
+using DispatchArc.Api.Configuration;
 using DispatchArc.Api.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using System.Text.Json.Serialization;
@@ -26,6 +27,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddDispatchArcSwagger();
 builder.Services.AddProblemDetails();
+builder.Services.AddDispatchArcProductionHosting(
+    builder.Configuration);
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
     options.InvalidModelStateResponseFactory =
@@ -62,28 +65,18 @@ builder.Services.AddScoped<PaymentService>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<OperationalAlertService>();
 
-var connectionString =
-    builder.Configuration.GetConnectionString("Database")
-    ?? throw new InvalidOperationException(
-        "Database connection string is missing.");
+var startupConfiguration =
+    StartupConfigurationValidator.ValidateAndGet(
+        builder.Configuration,
+        builder.Environment.IsProduction());
 
-builder.Services.AddInfrastructure(connectionString);
+var jwtOptions =
+    startupConfiguration.Jwt;
 
-var jwtOptions = builder.Configuration
-    .GetSection(JwtOptions.SectionName)
-    .Get<JwtOptions>()
-    ?? throw new InvalidOperationException(
-        "JWT configuration is missing.");
-
-if (string.IsNullOrWhiteSpace(jwtOptions.Issuer) ||
-    string.IsNullOrWhiteSpace(jwtOptions.Audience) ||
-    string.IsNullOrWhiteSpace(jwtOptions.Key) ||
-    jwtOptions.Key.Length < 32)
-{
-    throw new InvalidOperationException(
-        "JWT issuer, audience and a key of at least 32 characters are required.");
-}
-
+builder.Services.AddInfrastructure(
+    startupConfiguration.DatabaseConnectionString,
+    enableRetryOnFailure:
+        builder.Environment.IsProduction());
 builder.Services.Configure<JwtOptions>(
     builder.Configuration.GetSection(JwtOptions.SectionName));
 
@@ -184,12 +177,48 @@ var app = builder.Build();
 
 app.UseDispatchArcSwagger();
 
-app.UseHttpsRedirection();
+app.UseDispatchArcProductionHosting();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapGet(
+    "/api/health/live",
+    () =>
+        Results.Ok(new
+        {
+            status = "healthy",
+            application = "DispatchArc"
+        }));
+
+app.MapGet(
+    "/api/health/ready",
+    async (
+        DispatchArcDbContext database,
+        CancellationToken cancellationToken) =>
+    {
+        var canConnect =
+            await database.Database
+                .CanConnectAsync(
+                    cancellationToken);
+
+        return canConnect
+            ? Results.Ok(new
+            {
+                status = "ready",
+                service = "PostgreSQL",
+                application = "DispatchArc"
+            })
+            : Results.Problem(
+                title:
+                    "Application is not ready.",
+                detail:
+                    "PostgreSQL connectivity is unavailable.",
+                statusCode:
+                    StatusCodes
+                        .Status503ServiceUnavailable);
+    });
 
 app.MapGet(
     "/api/health/database",
