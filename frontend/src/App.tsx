@@ -15,10 +15,13 @@ import {
   Users,
   WalletCards,
   Wrench,
+  LogOut,
   X,
 } from 'lucide-react'
-import { NavLink, Navigate, Route, Routes } from 'react-router-dom'
+import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import './App.css'
+import LoginPage from './pages/LoginPage'
+import { getCurrentSession, logout } from './api/auth'
 
 const navigation = [
   { label: 'Overview', path: '/dashboard', icon: LayoutDashboard },
@@ -58,11 +61,9 @@ function DashboardPage() {
     <main className="dashboard">
       <section className="hero-row">
         <div>
-          <p className="eyebrow">Wednesday · Operations</p>
+          <p className="eyebrow">Wednesday &middot; Operations</p>
           <h1>Good evening.</h1>
-          <p className="hero-copy">
-            Here’s what needs your attention across today’s dispatch.
-          </p>
+          <p className="hero-copy">Here&rsquo;s what needs your attention across today&rsquo;s dispatch.</p>
         </div>
 
         <button className="primary-button" type="button">
@@ -122,7 +123,7 @@ function DashboardPage() {
           <header className="panel-header">
             <div>
               <p className="eyebrow">Live queue</p>
-              <h2>Today’s jobs</h2>
+              <h2>Today&rsquo;s jobs</h2>
             </div>
 
             <button className="text-button" type="button">
@@ -208,6 +209,29 @@ function PlaceholderPage({ title }: { title: string }) {
 
 function App() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const location = useLocation()
+  const session = getCurrentSession()
+
+  const userInitials = session
+    ? session.fullName
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase())
+        .join('')
+    : 'DA'
+
+  if (location.pathname === '/login') {
+    return session ? (
+      <Navigate replace to="/dashboard" />
+    ) : (
+      <LoginPage />
+    )
+  }
+
+  if (!session) {
+    return <Navigate replace to="/login" />
+  }
 
   return (
     <div className="app-shell">
@@ -255,7 +279,7 @@ function App() {
             <div className="workspace-avatar">DA</div>
             <div>
               <strong>DispatchArc HQ</strong>
-              <small>Owner workspace</small>
+              <small>{session.role} workspace</small>
             </div>
           </div>
         </div>
@@ -300,12 +324,25 @@ function App() {
             </button>
 
             <div className="user-chip">
-              <div className="user-avatar">LB</div>
-              <div className="user-copy">
-                <strong>Operations</strong>
-                <small>Owner</small>
-              </div>
-            </div>
+  <div className="user-avatar">{userInitials}</div>
+  <div className="user-copy">
+    <strong>{session.fullName}</strong>
+    <small>{session.role}</small>
+  </div>
+</div>
+
+<button
+  aria-label="Sign out"
+  className="icon-button"
+  onClick={() => {
+    logout()
+    window.location.replace('/login')
+  }}
+  title="Sign out"
+  type="button"
+>
+  <LogOut size={18} />
+</button>
           </div>
         </header>
 

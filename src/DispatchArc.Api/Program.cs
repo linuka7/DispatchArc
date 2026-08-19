@@ -24,6 +24,18 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(
+        "FrontendDevelopment",
+        policy => policy
+            .WithOrigins(
+                "http://localhost:5173",
+                "http://127.0.0.1:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
+
 builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddDispatchArcSwagger();
 builder.Services.AddProblemDetails();
@@ -195,6 +207,11 @@ if (args.Contains(
 app.UseDispatchArcSwagger();
 
 app.UseDispatchArcProductionHosting();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors("FrontendDevelopment");
+}
 
 app.UseAuthentication();
 app.UseAuthorization();
