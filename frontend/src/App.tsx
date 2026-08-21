@@ -21,6 +21,7 @@ import {
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import './App.css'
 import LoginPage from './pages/LoginPage'
+import JobsPage from './pages/JobsPage'
 import { getCurrentSession, logout } from './api/auth'
 
 const navigation = [
@@ -349,7 +350,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Navigate replace to="/dashboard" />} />
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/jobs" element={<PlaceholderPage title="Jobs" />} />
+          <Route path="/jobs" element={<JobsPage tenantId={session.tenantId} />} />
           <Route
             path="/customers"
             element={<PlaceholderPage title="Customers" />}

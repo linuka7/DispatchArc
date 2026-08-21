@@ -57,3 +57,15 @@ export interface ProblemDetails {
   detail?: string
   status?: number
 }
+
+export interface Customer {
+  id: string
+  tenantId: string
+  name: string
+  phone: string
+  email: string | null
+  addressLine: string | null
+  city: string | null
+  createdAtUtc: string
+  updatedAtUtc: string
+}

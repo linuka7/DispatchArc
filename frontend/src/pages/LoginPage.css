@@ -355,3 +355,58 @@
     width: 100%;
   }
 }
+.remembered-workspace {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 11px;
+  border: 1px solid rgba(94, 230, 180, 0.18);
+  border-radius: 10px;
+  background: rgba(94, 230, 180, 0.045);
+}
+
+.remembered-workspace-icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.remembered-workspace-copy {
+  min-width: 0;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.remembered-workspace-copy span {
+  color: #71818f;
+  font-size: 9px;
+}
+
+.remembered-workspace-copy strong {
+  color: #dce7eb;
+  font-size: 11px;
+}
+
+.remembered-workspace > button {
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 7px;
+  color: var(--accent);
+  background: transparent;
+  font: inherit;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.remembered-workspace > button:hover {
+  background: var(--accent-soft);
+}

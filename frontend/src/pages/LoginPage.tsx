@@ -1,7 +1,8 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import type { FormEvent } from 'react'
 import {
   ArrowRight,
+  Building2,
   Eye,
   EyeOff,
   LockKeyhole,
@@ -12,10 +13,18 @@ import { ApiError } from '../api/client'
 import { login } from '../api/auth'
 import './LoginPage.css'
 
+const workspaceStorageKey = 'dispatcharc.workspace'
+
 export default function LoginPage() {
   const navigate = useNavigate()
 
-  const [tenantId, setTenantId] = useState('')
+  const rememberedWorkspace =
+    localStorage.getItem(workspaceStorageKey) ?? ''
+
+  const [tenantId, setTenantId] = useState(rememberedWorkspace)
+  const [workspaceRemembered, setWorkspaceRemembered] = useState(
+    Boolean(rememberedWorkspace),
+  )
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -25,15 +34,22 @@ export default function LoginPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
+    const normalizedTenantId = tenantId.trim()
+
     setError('')
     setSubmitting(true)
 
     try {
       await login({
-        tenantId: tenantId.trim(),
+        tenantId: normalizedTenantId,
         email: email.trim(),
         password,
       })
+
+      localStorage.setItem(
+        workspaceStorageKey,
+        normalizedTenantId,
+      )
 
       navigate('/dashboard', { replace: true })
     } catch (exception) {
@@ -45,6 +61,13 @@ export default function LoginPage() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  function changeWorkspace() {
+    localStorage.removeItem(workspaceStorageKey)
+    setTenantId('')
+    setWorkspaceRemembered(false)
+    setError('')
   }
 
   return (
@@ -63,7 +86,9 @@ export default function LoginPage() {
         </div>
 
         <div className="login-brand-copy">
-          <p className="login-eyebrow">Operations command center</p>
+          <p className="login-eyebrow">
+            Operations command center
+          </p>
 
           <h1>
             Every job.
@@ -81,7 +106,9 @@ export default function LoginPage() {
           <ShieldCheck size={17} />
           <div>
             <strong>Tenant-secured access</strong>
-            <span>JWT authentication Â· Role-based permissions</span>
+            <span>
+              JWT authentication &middot; Role-based permissions
+            </span>
           </div>
         </div>
       </section>
@@ -95,27 +122,55 @@ export default function LoginPage() {
           <div className="login-heading">
             <p className="login-eyebrow">Welcome back</p>
             <h2>Sign in to DispatchArc</h2>
-            <p>Enter your workspace credentials to continue.</p>
+            <p>
+              Enter your workspace credentials to continue.
+            </p>
           </div>
 
           <form onSubmit={handleSubmit}>
-            <label className="login-field">
-              <span>Tenant ID</span>
-              <input
-                autoComplete="organization"
-                onChange={(event) => setTenantId(event.target.value)}
-                placeholder="00000000-0000-0000-0000-000000000000"
-                required
-                type="text"
-                value={tenantId}
-              />
-            </label>
+            {workspaceRemembered ? (
+              <div className="remembered-workspace">
+                <div className="remembered-workspace-icon">
+                  <Building2 size={16} />
+                </div>
+
+                <div className="remembered-workspace-copy">
+                  <span>Workspace remembered</span>
+                  <strong>
+                    {tenantId.slice(0, 8)}...
+                  </strong>
+                </div>
+
+                <button
+                  onClick={changeWorkspace}
+                  type="button"
+                >
+                  Change
+                </button>
+              </div>
+            ) : (
+              <label className="login-field">
+                <span>Workspace ID</span>
+                <input
+                  autoComplete="organization"
+                  onChange={(event) =>
+                    setTenantId(event.target.value)
+                  }
+                  placeholder="00000000-0000-0000-0000-000000000000"
+                  required
+                  type="text"
+                  value={tenantId}
+                />
+              </label>
+            )}
 
             <label className="login-field">
               <span>Email address</span>
               <input
                 autoComplete="email"
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={(event) =>
+                  setEmail(event.target.value)
+                }
                 placeholder="you@company.com"
                 required
                 type="email"
@@ -129,7 +184,9 @@ export default function LoginPage() {
               <div className="password-field">
                 <input
                   autoComplete="current-password"
-                  onChange={(event) => setPassword(event.target.value)}
+                  onChange={(event) =>
+                    setPassword(event.target.value)
+                  }
                   placeholder="Enter your password"
                   required
                   type={showPassword ? 'text' : 'password'}
@@ -138,9 +195,13 @@ export default function LoginPage() {
 
                 <button
                   aria-label={
-                    showPassword ? 'Hide password' : 'Show password'
+                    showPassword
+                      ? 'Hide password'
+                      : 'Show password'
                   }
-                  onClick={() => setShowPassword((current) => !current)}
+                  onClick={() =>
+                    setShowPassword((current) => !current)
+                  }
                   type="button"
                 >
                   {showPassword ? (
@@ -163,13 +224,16 @@ export default function LoginPage() {
               disabled={submitting}
               type="submit"
             >
-              <span>{submitting ? 'Signing in...' : 'Sign in'}</span>
+              <span>
+                {submitting ? 'Signing in...' : 'Sign in'}
+              </span>
               {!submitting && <ArrowRight size={17} />}
             </button>
           </form>
 
           <p className="login-footnote">
-            Access is restricted to authorized DispatchArc workspace members.
+            Access is restricted to authorized DispatchArc
+            workspace members.
           </p>
         </div>
       </section>
