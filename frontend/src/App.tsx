@@ -2,27 +2,28 @@ import { useState } from 'react'
 import {
   Bell,
   BriefcaseBusiness,
-  CalendarDays,
-  ChevronRight,
-  CircleDollarSign,
-  Clock3,
   LayoutDashboard,
   Menu,
-  Plus,
   ReceiptText,
   Search,
   UserRoundCog,
   Users,
   WalletCards,
-  Wrench,
   LogOut,
   X,
 } from 'lucide-react'
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import './App.css'
 import LoginPage from './pages/LoginPage'
+import DashboardPage from './pages/DashboardPage'
 import JobsPage from './pages/JobsPage'
+import TeamMembersPage from './pages/TeamMembersPage'
 import { getCurrentSession, logout } from './api/auth'
+import { getOperationalAlerts } from './api/alerts'
+import InvoicesPage from './pages/InvoicesPage'
+import PaymentsPage from './pages/PaymentsPage'
+import CustomersPage from './pages/CustomersPage'
 
 const navigation = [
   { label: 'Overview', path: '/dashboard', icon: LayoutDashboard },
@@ -33,185 +34,27 @@ const navigation = [
   { label: 'Payments', path: '/payments', icon: WalletCards },
 ]
 
-const jobs = [
-  {
-    number: 'JOB-24018',
-    title: 'HVAC inspection & repair',
-    customer: 'Northstar Properties',
-    status: 'Scheduled',
-    time: '09:30 AM',
-  },
-  {
-    number: 'JOB-24019',
-    title: 'Electrical panel diagnosis',
-    customer: 'Atlas Retail Group',
-    status: 'In Progress',
-    time: '11:00 AM',
-  },
-  {
-    number: 'JOB-24020',
-    title: 'Emergency plumbing callout',
-    customer: 'Harbour Suites',
-    status: 'Approved',
-    time: '01:45 PM',
-  },
-]
 
-function DashboardPage() {
-  return (
-    <main className="dashboard">
-      <section className="hero-row">
-        <div>
-          <p className="eyebrow">Wednesday &middot; Operations</p>
-          <h1>Good evening.</h1>
-          <p className="hero-copy">Here&rsquo;s what needs your attention across today&rsquo;s dispatch.</p>
-        </div>
 
-        <button className="primary-button" type="button">
-          <Plus size={17} />
-          New job
-        </button>
-      </section>
 
-      <section className="metric-grid">
-        <article className="metric-card metric-card-featured">
-          <div className="metric-icon">
-            <BriefcaseBusiness size={19} />
-          </div>
-          <div>
-            <span className="metric-label">Active jobs</span>
-            <strong>18</strong>
-            <small>6 scheduled today</small>
-          </div>
-        </article>
-
-        <article className="metric-card">
-          <div className="metric-icon">
-            <Clock3 size={19} />
-          </div>
-          <div>
-            <span className="metric-label">Awaiting approval</span>
-            <strong>05</strong>
-            <small>2 need follow-up</small>
-          </div>
-        </article>
-
-        <article className="metric-card">
-          <div className="metric-icon">
-            <CircleDollarSign size={19} />
-          </div>
-          <div>
-            <span className="metric-label">Open invoices</span>
-            <strong>12</strong>
-            <small>$8,420 outstanding</small>
-          </div>
-        </article>
-
-        <article className="metric-card">
-          <div className="metric-icon">
-            <Wrench size={19} />
-          </div>
-          <div>
-            <span className="metric-label">Technicians</span>
-            <strong>08</strong>
-            <small>6 currently available</small>
-          </div>
-        </article>
-      </section>
-
-      <section className="dashboard-grid">
-        <article className="panel jobs-panel">
-          <header className="panel-header">
-            <div>
-              <p className="eyebrow">Live queue</p>
-              <h2>Today&rsquo;s jobs</h2>
-            </div>
-
-            <button className="text-button" type="button">
-              View all
-              <ChevronRight size={15} />
-            </button>
-          </header>
-
-          <div className="job-list">
-            {jobs.map((job) => (
-              <div className="job-row" key={job.number}>
-                <div className="job-time">
-                  <CalendarDays size={16} />
-                  <span>{job.time}</span>
-                </div>
-
-                <div className="job-main">
-                  <span className="job-number">{job.number}</span>
-                  <strong>{job.title}</strong>
-                  <small>{job.customer}</small>
-                </div>
-
-                <span
-                  className={`status-pill status-${job.status
-                    .toLowerCase()
-                    .replace(' ', '-')}`}
-                >
-                  {job.status}
-                </span>
-              </div>
-            ))}
-          </div>
-        </article>
-
-        <aside className="panel attention-panel">
-          <header className="panel-header">
-            <div>
-              <p className="eyebrow">Priority</p>
-              <h2>Needs attention</h2>
-            </div>
-          </header>
-
-          <div className="attention-item">
-            <span className="attention-dot" />
-            <div>
-              <strong>2 quotes are ageing</strong>
-              <p>Waiting more than 48 hours for customer approval.</p>
-            </div>
-          </div>
-
-          <div className="attention-item">
-            <span className="attention-dot warning" />
-            <div>
-              <strong>Invoice #INV-1042</strong>
-              <p>Payment is now 6 days overdue.</p>
-            </div>
-          </div>
-
-          <div className="attention-item">
-            <span className="attention-dot calm" />
-            <div>
-              <strong>Schedule opening</strong>
-              <p>Two technicians are free after 3:00 PM.</p>
-            </div>
-          </div>
-        </aside>
-      </section>
-    </main>
-  )
-}
-
-function PlaceholderPage({ title }: { title: string }) {
-  return (
-    <main className="dashboard">
-      <section className="placeholder-page">
-        <p className="eyebrow">DispatchArc</p>
-        <h1>{title}</h1>
-        <p>This workspace is ready for the next M20 build step.</p>
-      </section>
-    </main>
-  )
-}
 
 function App() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const location = useLocation()
   const session = getCurrentSession()
+
+  const canViewAlerts = Boolean(
+    session &&
+      (session.role === 'Owner' ||
+        session.role === 'Dispatcher' ||
+        session.role === 'Finance'),
+  )
+
+  const alertsQuery = useQuery({
+    queryKey: ['topbar-alerts', session?.tenantId],
+    queryFn: () => getOperationalAlerts(session!.tenantId),
+    enabled: canViewAlerts,
+  })
 
   const userInitials = session
     ? session.fullName
@@ -233,6 +76,8 @@ function App() {
   if (!session) {
     return <Navigate replace to="/login" />
   }
+
+  const alertCount = alertsQuery.data?.totalCount ?? 0
 
   return (
     <div className="app-shell">
@@ -319,50 +164,66 @@ function App() {
           </div>
 
           <div className="topbar-actions">
-            <button aria-label="Notifications" className="icon-button" type="button">
+            <button
+              aria-label="Notifications"
+              className="icon-button"
+              title={alertCount > 0 ? `${alertCount} operational alerts` : 'Notifications'}
+              type="button"
+            >
               <Bell size={18} />
-              <span className="notification-dot" />
+              {alertCount > 0 && <span className="notification-dot" />}
             </button>
 
             <div className="user-chip">
-  <div className="user-avatar">{userInitials}</div>
-  <div className="user-copy">
-    <strong>{session.fullName}</strong>
-    <small>{session.role}</small>
-  </div>
-</div>
+              <div className="user-avatar">{userInitials}</div>
+              <div className="user-copy">
+                <strong>{session.fullName}</strong>
+                <small>{session.role}</small>
+              </div>
+            </div>
 
-<button
-  aria-label="Sign out"
-  className="icon-button"
-  onClick={() => {
-    logout()
-    window.location.replace('/login')
-  }}
-  title="Sign out"
-  type="button"
->
-  <LogOut size={18} />
-</button>
+            <button
+              aria-label="Sign out"
+              className="icon-button"
+              onClick={() => {
+                logout()
+                window.location.replace('/login')
+              }}
+              title="Sign out"
+              type="button"
+            >
+              <LogOut size={18} />
+            </button>
           </div>
         </header>
 
         <Routes>
           <Route path="/" element={<Navigate replace to="/dashboard" />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route
+            path="/dashboard"
+            element={
+              <DashboardPage
+                session={session}
+                tenantId={session.tenantId}
+              />
+            }
+          />
           <Route path="/jobs" element={<JobsPage tenantId={session.tenantId} />} />
           <Route
             path="/customers"
-            element={<PlaceholderPage title="Customers" />}
+            element={<CustomersPage tenantId={session.tenantId} />}
           />
-          <Route path="/team" element={<PlaceholderPage title="Team" />} />
+          <Route
+            path="/team"
+            element={<TeamMembersPage tenantId={session.tenantId} />}
+          />
           <Route
             path="/invoices"
-            element={<PlaceholderPage title="Invoices" />}
+            element={<InvoicesPage tenantId={session.tenantId} />}
           />
           <Route
             path="/payments"
-            element={<PlaceholderPage title="Payments" />}
+            element={<PaymentsPage tenantId={session.tenantId} />}
           />
           <Route path="*" element={<Navigate replace to="/dashboard" />} />
         </Routes>
