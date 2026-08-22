@@ -3,6 +3,22 @@ import type {
   AuthResponse,
   LoginRequest,
 } from './types'
+import { demoTenantId } from './demo'
+
+export function startDemoSession(): AuthResponse {
+  const response: AuthResponse = {
+    accessToken: 'demo-token',
+    expiresAtUtc: new Date(Date.now() + 86400000).toISOString(),
+    userId: 'demo-owner',
+    tenantId: demoTenantId,
+    fullName: 'ARK II',
+    email: 'owner@dispatcharc.demo',
+    role: 'Owner',
+  }
+
+  sessionStorage.setItem(sessionKey, JSON.stringify(response))
+  return response
+}
 
 export async function login(
   request: LoginRequest,

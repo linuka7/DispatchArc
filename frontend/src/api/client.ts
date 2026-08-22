@@ -1,4 +1,5 @@
 import type { ProblemDetails } from './types'
+import { demoRequest } from './demo'
 
 const apiBaseUrl =
   (import.meta.env.VITE_API_BASE_URL ??
@@ -44,6 +45,10 @@ export async function apiRequest<T>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> {
+  if (getAccessToken() === 'demo-token') {
+    return demoRequest<T>(path, init)
+  }
+
   const headers = new Headers(init.headers)
 
   if (init.body && !headers.has('Content-Type')) {

@@ -444,3 +444,40 @@
 .remembered-workspace > button:hover {
   background: var(--accent-soft);
 }
+
+.demo-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  color: #52636b;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.demo-divider::before,
+.demo-divider::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: var(--border);
+}
+
+.demo-button {
+  width: 100%;
+  height: 42px;
+  margin-top: 12px;
+  border: 1px solid rgba(142, 197, 214, 0.28);
+  border-radius: 10px;
+  color: #d9f1f3;
+  background: rgba(142, 197, 214, 0.08);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.demo-button:hover {
+  border-color: rgba(142, 197, 214, 0.5);
+  background: rgba(142, 197, 214, 0.14);
+}

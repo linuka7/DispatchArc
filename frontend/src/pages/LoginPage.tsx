@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { ApiError } from '../api/client'
-import { login } from '../api/auth'
+import { login, startDemoSession } from '../api/auth'
 import './LoginPage.css'
 
 export default function LoginPage() {
@@ -44,6 +44,11 @@ export default function LoginPage() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  function enterDemo() {
+    startDemoSession()
+    navigate('/dashboard', { replace: true })
   }
 
   return (
@@ -174,6 +179,11 @@ export default function LoginPage() {
             Access is restricted to authorized DispatchArc
             workspace members.
           </p>
+
+          <div className="demo-divider"><span>Showcase mode</span></div>
+          <button className="demo-button" onClick={enterDemo} type="button">
+            Explore live demo
+          </button>
         </div>
       </section>
     </main>
