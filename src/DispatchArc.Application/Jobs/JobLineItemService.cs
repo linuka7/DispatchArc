@@ -1,5 +1,6 @@
 using DispatchArc.Domain.Entities;
 using DispatchArc.Domain.Enums;
+using DispatchArc.Application.Invoices;
 
 namespace DispatchArc.Application.Jobs;
 
@@ -7,13 +8,16 @@ public sealed class JobLineItemService
 {
     private readonly IJobLineItemRepository _lineItems;
     private readonly IServiceJobRepository _jobs;
+    private readonly IInvoiceRepository _invoices;
 
     public JobLineItemService(
         IJobLineItemRepository lineItems,
-        IServiceJobRepository jobs)
+        IServiceJobRepository jobs,
+        IInvoiceRepository invoices)
     {
         _lineItems = lineItems;
         _jobs = jobs;
+        _invoices = invoices;
     }
 
     public async Task<JobQuoteResponse?> GetQuoteAsync(
@@ -66,7 +70,7 @@ public sealed class JobLineItemService
         if (job is null)
             return null;
 
-        EnsurePricingEditable(job);
+        await EnsurePricingEditableAsync(job, tenantId, cancellationToken);
 
         var item = new JobLineItem(
             tenantId,
@@ -102,7 +106,7 @@ public sealed class JobLineItemService
         if (job is null)
             return null;
 
-        EnsurePricingEditable(job);
+        await EnsurePricingEditableAsync(job, tenantId, cancellationToken);
 
         var item = await _lineItems.GetByIdAsync(
             tenantId,
@@ -138,7 +142,7 @@ public sealed class JobLineItemService
         if (job is null)
             return false;
 
-        EnsurePricingEditable(job);
+        await EnsurePricingEditableAsync(job, tenantId, cancellationToken);
 
         var item = await _lineItems.GetByIdAsync(
             tenantId,
@@ -157,9 +161,25 @@ public sealed class JobLineItemService
         return true;
     }
 
-    private static void EnsurePricingEditable(
-        ServiceJob job)
+    private async Task EnsurePricingEditableAsync(
+        ServiceJob job,
+        Guid tenantId,
+        CancellationToken cancellationToken)
     {
+        if (job.Status is JobStatus.New or JobStatus.Quoted)
+        {
+            return;
+        }
+
+        if (job.Status == JobStatus.Completed &&
+            await _invoices.GetByJobAsync(
+                tenantId,
+                job.Id,
+                cancellationToken) is null)
+        {
+            return;
+        }
+
         if (job.Status is not JobStatus.New
             and not JobStatus.Quoted)
         {

@@ -6,10 +6,11 @@ import {
   EyeOff,
   LockKeyhole,
   ShieldCheck,
+  Waypoints,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { ApiError } from '../api/client'
-import { login } from '../api/auth'
+import { login, startDemoSession } from '../api/auth'
 import './LoginPage.css'
 
 export default function LoginPage() {
@@ -45,13 +46,17 @@ export default function LoginPage() {
     }
   }
 
+  function enterDemo() {
+    startDemoSession()
+    navigate('/dashboard', { replace: true })
+  }
+
   return (
     <main className="login-page">
       <section className="login-brand-panel">
         <div className="login-brand">
           <div className="login-brand-mark">
-            <span />
-            <span />
+            <Waypoints size={20} strokeWidth={2.2} />
           </div>
 
           <div>
@@ -174,6 +179,11 @@ export default function LoginPage() {
             Access is restricted to authorized DispatchArc
             workspace members.
           </p>
+
+          <div className="demo-divider"><span>Showcase mode</span></div>
+          <button className="demo-button" onClick={enterDemo} type="button">
+            Explore live demo
+          </button>
         </div>
       </section>
     </main>

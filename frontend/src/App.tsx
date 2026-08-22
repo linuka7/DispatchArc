@@ -156,6 +156,13 @@ function App() {
               <small>{session.role} workspace</small>
             </div>
           </div>
+
+          <div className="ark-credit">
+            <span>Built by</span>
+            <a href="https://ark-ii.netlify.app/" rel="noreferrer" target="_blank">
+              <strong>ARK II</strong>
+            </a>
+          </div>
         </div>
       </aside>
 
@@ -302,6 +309,7 @@ function App() {
           />
           <Route path="*" element={<Navigate replace to="/dashboard" />} />
         </Routes>
+
       </div>
     </div>
   )

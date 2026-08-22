@@ -124,6 +124,35 @@
   margin-top: auto;
 }
 
+.ark-credit {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 13px 10px 0;
+  color: #68736f;
+  font-size: 9px;
+}
+
+.ark-credit a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.ark-credit:hover {
+  color: var(--highlight);
+}
+
+.ark-credit a:hover {
+  color: var(--highlight);
+}
+
+.ark-credit strong {
+  color: var(--muted-strong);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+
 .workspace-card {
   display: flex;
   align-items: center;
@@ -840,6 +869,7 @@ select {
   .dashboard {
     padding: 32px 18px 54px;
   }
+
 }
 
 @media (max-width: 600px) {
@@ -899,4 +929,5 @@ select {
   .panel-header {
     padding: 0 15px;
   }
+
 }

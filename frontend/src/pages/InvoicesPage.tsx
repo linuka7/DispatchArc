@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft,
+  BriefcaseBusiness,
   CreditCard,
   FileText,
   RefreshCw,
@@ -10,6 +11,7 @@ import {
 import { getJobs } from '../api/jobs'
 import { ApiError } from '../api/client'
 import {
+  createInvoice,
   getInvoiceByJob,
   type Invoice,
 } from '../api/invoices'
@@ -70,6 +72,7 @@ function InvoicesPage({ tenantId }: InvoicesPageProps) {
   const [paymentReference, setPaymentReference] =
     useState('')
   const [paymentError, setPaymentError] = useState('')
+    const [invoiceError, setInvoiceError] = useState('')
 
   const invoicesQuery = useQuery({
     queryKey: ['invoices', tenantId],
@@ -81,6 +84,33 @@ function InvoicesPage({ tenantId }: InvoicesPageProps) {
   })
 
   const invoices = invoicesQuery.data ?? []
+
+    const completedJobsQuery = useQuery({
+      queryKey: ['completed-jobs-for-invoicing', tenantId],
+      queryFn: () => getJobs(tenantId, { status: 'Completed' }),
+    })
+
+    const createInvoiceMutation = useMutation({
+      mutationFn: (jobId: string) => createInvoice(tenantId, jobId),
+      onSuccess: async () => {
+        setInvoiceError('')
+        await queryClient.invalidateQueries({ queryKey: ['invoices', tenantId] })
+        await queryClient.invalidateQueries({ queryKey: ['payments', tenantId] })
+        await queryClient.invalidateQueries({ queryKey: ['completed-jobs-for-invoicing', tenantId] })
+      },
+      onError: (error) => {
+        setInvoiceError(
+          error instanceof Error
+            ? error.message
+            : 'Unable to create invoice.',
+        )
+      },
+    })
+
+    const invoicedJobIds = new Set(invoices.map((invoice) => invoice.serviceJobId))
+    const readyToInvoice = (completedJobsQuery.data ?? []).filter(
+      (job) => !invoicedJobIds.has(job.id),
+    )
 
   const paymentQuery = useQuery({
     queryKey: [
@@ -258,6 +288,50 @@ function InvoicesPage({ tenantId }: InvoicesPageProps) {
           <strong>{paidCount}</strong>
         </article>
       </section>
+
+      {(completedJobsQuery.isLoading || readyToInvoice.length > 0) && (
+        <section className="invoices-ready-panel">
+          <header>
+            <div>
+              <p className="eyebrow">Next step</p>
+              <h2>Ready to invoice</h2>
+            </div>
+            <span>{readyToInvoice.length} completed jobs</span>
+          </header>
+
+          {completedJobsQuery.isLoading ? (
+            <p className="invoices-ready-state">Checking completed jobs...</p>
+          ) : (
+            <div className="invoices-ready-list">
+              {readyToInvoice.map((job) => (
+                <div className="invoices-ready-row" key={job.id}>
+                  <div className="invoices-ready-icon">
+                    <BriefcaseBusiness size={17} />
+                  </div>
+                  <div className="invoices-ready-copy">
+                    <strong>{job.jobNumber}</strong>
+                    <span>{job.title}</span>
+                  </div>
+                  <button
+                    className="primary-button"
+                    disabled={createInvoiceMutation.isPending}
+                    onClick={() => {
+                      setInvoiceError('')
+                      createInvoiceMutation.mutate(job.id)
+                    }}
+                    type="button"
+                  >
+                    <FileText size={14} />
+                    Create invoice
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {invoiceError && <div className="invoices-ready-error">{invoiceError}</div>}
+        </section>
+      )}
 
       <section className="invoices-panel">
         <header>
