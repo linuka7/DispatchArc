@@ -12,6 +12,7 @@ import {
   LogOut,
   X,
   Waypoints,
+  ArrowUpRight,
 } from 'lucide-react'
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -302,6 +303,29 @@ function App() {
           />
           <Route path="*" element={<Navigate replace to="/dashboard" />} />
         </Routes>
+
+        <footer className="app-footer">
+          <div className="app-footer-brand">
+            <span className="app-footer-kicker">DispatchArc</span>
+            <span>Field operations, brought under control.</span>
+          </div>
+
+          <nav aria-label="Footer navigation" className="app-footer-nav">
+            {navigation.slice(0, 4).map(({ label, path }) => (
+              <NavLink key={path} to={path}>
+                {label}
+              </NavLink>
+            ))}
+          </nav>
+
+          <div className="app-footer-credit">
+            <span>Built by</span>
+            <a href="https://ark-ii.netlify.app/" rel="noreferrer" target="_blank">
+              ARK II <ArrowUpRight size={13} />
+            </a>
+            <small>© 2026</small>
+          </div>
+        </footer>
       </div>
     </div>
   )
