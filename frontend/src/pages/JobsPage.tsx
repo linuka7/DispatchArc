@@ -1866,7 +1866,7 @@ function JobsPage({ tenantId }: JobsPageProps) {
                           <span className="job-line-item-desc" title={item.description}>{item.description}</span>
                           <span className="job-line-item-qty-price">{item.quantity} &times; ${item.unitPrice.toFixed(2)}</span>
                           <span className="job-line-item-total">${item.lineTotal.toFixed(2)}</span>
-                          {selectedJobQuery.data.status === 'New' || selectedJobQuery.data.status === 'Quoted' ? (
+                          {selectedJobQuery.data.status === 'New' || selectedJobQuery.data.status === 'Quoted' || selectedJobQuery.data.status === 'Completed' ? (
                             <button
                               className="job-line-item-delete"
                               disabled={deleteLineItemMutation.isPending}
@@ -1886,7 +1886,7 @@ function JobsPage({ tenantId }: JobsPageProps) {
                     </div>
                   )}
 
-                  {(selectedJobQuery.data.status === 'New' || selectedJobQuery.data.status === 'Quoted') && (
+                  {(selectedJobQuery.data.status === 'New' || selectedJobQuery.data.status === 'Quoted' || selectedJobQuery.data.status === 'Completed') && (
                     <form
                       className="job-add-item-form"
                       onSubmit={(e) => {
