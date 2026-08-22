@@ -12,7 +12,6 @@ import {
   LogOut,
   X,
   Waypoints,
-  ArrowUpRight,
 } from 'lucide-react'
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -166,7 +165,6 @@ function App() {
           >
             <span>Built by</span>
             <strong>ARK II</strong>
-            <ArrowUpRight size={12} />
           </a>
         </div>
       </aside>
