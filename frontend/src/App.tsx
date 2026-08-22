@@ -157,15 +157,12 @@ function App() {
             </div>
           </div>
 
-          <a
-            className="ark-credit"
-            href="https://ark-ii.netlify.app/"
-            rel="noreferrer"
-            target="_blank"
-          >
+          <div className="ark-credit">
             <span>Built by</span>
-            <strong>ARK II</strong>
-          </a>
+            <a href="https://ark-ii.netlify.app/" rel="noreferrer" target="_blank">
+              <strong>ARK II</strong>
+            </a>
+          </div>
         </div>
       </aside>
 
