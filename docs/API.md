@@ -30,6 +30,10 @@ Typical sequence:
 
 The login/register response includes an access token.
 
+Login requires only the user's email and password. The API resolves the user's
+tenant from the account and includes that tenant in the JWT; clients do not
+need to submit a tenant ID when signing in.
+
 For a raw HTTP request:
 
     Authorization: Bearer <access-token>

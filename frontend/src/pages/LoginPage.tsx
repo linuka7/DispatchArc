@@ -2,7 +2,6 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import {
   ArrowRight,
-  Building2,
   Eye,
   EyeOff,
   LockKeyhole,
@@ -13,18 +12,9 @@ import { ApiError } from '../api/client'
 import { login } from '../api/auth'
 import './LoginPage.css'
 
-const workspaceStorageKey = 'dispatcharc.workspace'
-
 export default function LoginPage() {
   const navigate = useNavigate()
 
-  const rememberedWorkspace =
-    localStorage.getItem(workspaceStorageKey) ?? ''
-
-  const [tenantId, setTenantId] = useState(rememberedWorkspace)
-  const [workspaceRemembered, setWorkspaceRemembered] = useState(
-    Boolean(rememberedWorkspace),
-  )
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -34,22 +24,14 @@ export default function LoginPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    const normalizedTenantId = tenantId.trim()
-
     setError('')
     setSubmitting(true)
 
     try {
       await login({
-        tenantId: normalizedTenantId,
         email: email.trim(),
         password,
       })
-
-      localStorage.setItem(
-        workspaceStorageKey,
-        normalizedTenantId,
-      )
 
       navigate('/dashboard', { replace: true })
     } catch (exception) {
@@ -61,13 +43,6 @@ export default function LoginPage() {
     } finally {
       setSubmitting(false)
     }
-  }
-
-  function changeWorkspace() {
-    localStorage.removeItem(workspaceStorageKey)
-    setTenantId('')
-    setWorkspaceRemembered(false)
-    setError('')
   }
 
   return (
@@ -128,42 +103,6 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit}>
-            {workspaceRemembered ? (
-              <div className="remembered-workspace">
-                <div className="remembered-workspace-icon">
-                  <Building2 size={16} />
-                </div>
-
-                <div className="remembered-workspace-copy">
-                  <span>Workspace remembered</span>
-                  <strong>
-                    {tenantId.slice(0, 8)}...
-                  </strong>
-                </div>
-
-                <button
-                  onClick={changeWorkspace}
-                  type="button"
-                >
-                  Change
-                </button>
-              </div>
-            ) : (
-              <label className="login-field">
-                <span>Workspace ID</span>
-                <input
-                  autoComplete="organization"
-                  onChange={(event) =>
-                    setTenantId(event.target.value)
-                  }
-                  placeholder="00000000-0000-0000-0000-000000000000"
-                  required
-                  type="text"
-                  value={tenantId}
-                />
-              </label>
-            )}
-
             <label className="login-field">
               <span>Email address</span>
               <input

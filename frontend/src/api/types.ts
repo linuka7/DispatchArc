@@ -20,6 +20,19 @@ export type JobStatus =
   | 'Invoiced'
   | 'Cancelled'
 
+export type InvoiceStatus =
+  | 'Issued'
+  | 'PartiallyPaid'
+  | 'Paid'
+  | 'Void'
+
+export type PaymentMethod =
+  | 'Cash'
+  | 'Card'
+  | 'BankTransfer'
+  | 'Cheque'
+  | 'Other'
+
 export interface AuthResponse {
   accessToken: string
   expiresAtUtc: string
@@ -31,7 +44,6 @@ export interface AuthResponse {
 }
 
 export interface LoginRequest {
-  tenantId: string
   email: string
   password: string
 }
@@ -68,4 +80,50 @@ export interface Customer {
   city: string | null
   createdAtUtc: string
   updatedAtUtc: string
+}
+
+export interface InvoiceLineItem {
+  id: string
+  tenantId: string
+  invoiceId: string
+  description: string
+  quantity: number
+  unitPrice: number
+  lineTotal: number
+  createdAtUtc: string
+}
+
+export interface Invoice {
+  id: string
+  tenantId: string
+  serviceJobId: string
+  customerId: string
+  invoiceNumber: string
+  status: InvoiceStatus
+  issuedAtUtc: string
+  dueAtUtc: string
+  subtotal: number
+  total: number
+  createdAtUtc: string
+  updatedAtUtc: string
+  lineItems: InvoiceLineItem[]
+}
+
+export interface Payment {
+  id: string
+  tenantId: string
+  invoiceId: string
+  paymentNumber: string
+  amount: number
+  method: PaymentMethod
+  reference: string
+  paidAtUtc: string
+  createdAtUtc: string
+}
+
+export interface InvoicePaymentSummary {
+  invoice: Invoice
+  payments: Payment[]
+  amountPaid: number
+  amountDue: number
 }

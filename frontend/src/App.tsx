@@ -1,28 +1,30 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Bell,
   BriefcaseBusiness,
-  CalendarDays,
-  ChevronRight,
-  CircleDollarSign,
-  Clock3,
   LayoutDashboard,
   Menu,
-  Plus,
   ReceiptText,
   Search,
   UserRoundCog,
   Users,
   WalletCards,
-  Wrench,
   LogOut,
   X,
+  Waypoints,
 } from 'lucide-react'
-import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import './App.css'
 import LoginPage from './pages/LoginPage'
+import DashboardPage from './pages/DashboardPage'
 import JobsPage from './pages/JobsPage'
+import TeamMembersPage from './pages/TeamMembersPage'
 import { getCurrentSession, logout } from './api/auth'
+import { getOperationalAlerts } from './api/alerts'
+import InvoicesPage from './pages/InvoicesPage'
+import PaymentsPage from './pages/PaymentsPage'
+import CustomersPage from './pages/CustomersPage'
 
 const navigation = [
   { label: 'Overview', path: '/dashboard', icon: LayoutDashboard },
@@ -33,190 +35,47 @@ const navigation = [
   { label: 'Payments', path: '/payments', icon: WalletCards },
 ]
 
-const jobs = [
-  {
-    number: 'JOB-24018',
-    title: 'HVAC inspection & repair',
-    customer: 'Northstar Properties',
-    status: 'Scheduled',
-    time: '09:30 AM',
-  },
-  {
-    number: 'JOB-24019',
-    title: 'Electrical panel diagnosis',
-    customer: 'Atlas Retail Group',
-    status: 'In Progress',
-    time: '11:00 AM',
-  },
-  {
-    number: 'JOB-24020',
-    title: 'Emergency plumbing callout',
-    customer: 'Harbour Suites',
-    status: 'Approved',
-    time: '01:45 PM',
-  },
-]
 
-function DashboardPage() {
-  return (
-    <main className="dashboard">
-      <section className="hero-row">
-        <div>
-          <p className="eyebrow">Wednesday &middot; Operations</p>
-          <h1>Good evening.</h1>
-          <p className="hero-copy">Here&rsquo;s what needs your attention across today&rsquo;s dispatch.</p>
-        </div>
 
-        <button className="primary-button" type="button">
-          <Plus size={17} />
-          New job
-        </button>
-      </section>
 
-      <section className="metric-grid">
-        <article className="metric-card metric-card-featured">
-          <div className="metric-icon">
-            <BriefcaseBusiness size={19} />
-          </div>
-          <div>
-            <span className="metric-label">Active jobs</span>
-            <strong>18</strong>
-            <small>6 scheduled today</small>
-          </div>
-        </article>
-
-        <article className="metric-card">
-          <div className="metric-icon">
-            <Clock3 size={19} />
-          </div>
-          <div>
-            <span className="metric-label">Awaiting approval</span>
-            <strong>05</strong>
-            <small>2 need follow-up</small>
-          </div>
-        </article>
-
-        <article className="metric-card">
-          <div className="metric-icon">
-            <CircleDollarSign size={19} />
-          </div>
-          <div>
-            <span className="metric-label">Open invoices</span>
-            <strong>12</strong>
-            <small>$8,420 outstanding</small>
-          </div>
-        </article>
-
-        <article className="metric-card">
-          <div className="metric-icon">
-            <Wrench size={19} />
-          </div>
-          <div>
-            <span className="metric-label">Technicians</span>
-            <strong>08</strong>
-            <small>6 currently available</small>
-          </div>
-        </article>
-      </section>
-
-      <section className="dashboard-grid">
-        <article className="panel jobs-panel">
-          <header className="panel-header">
-            <div>
-              <p className="eyebrow">Live queue</p>
-              <h2>Today&rsquo;s jobs</h2>
-            </div>
-
-            <button className="text-button" type="button">
-              View all
-              <ChevronRight size={15} />
-            </button>
-          </header>
-
-          <div className="job-list">
-            {jobs.map((job) => (
-              <div className="job-row" key={job.number}>
-                <div className="job-time">
-                  <CalendarDays size={16} />
-                  <span>{job.time}</span>
-                </div>
-
-                <div className="job-main">
-                  <span className="job-number">{job.number}</span>
-                  <strong>{job.title}</strong>
-                  <small>{job.customer}</small>
-                </div>
-
-                <span
-                  className={`status-pill status-${job.status
-                    .toLowerCase()
-                    .replace(' ', '-')}`}
-                >
-                  {job.status}
-                </span>
-              </div>
-            ))}
-          </div>
-        </article>
-
-        <aside className="panel attention-panel">
-          <header className="panel-header">
-            <div>
-              <p className="eyebrow">Priority</p>
-              <h2>Needs attention</h2>
-            </div>
-          </header>
-
-          <div className="attention-item">
-            <span className="attention-dot" />
-            <div>
-              <strong>2 quotes are ageing</strong>
-              <p>Waiting more than 48 hours for customer approval.</p>
-            </div>
-          </div>
-
-          <div className="attention-item">
-            <span className="attention-dot warning" />
-            <div>
-              <strong>Invoice #INV-1042</strong>
-              <p>Payment is now 6 days overdue.</p>
-            </div>
-          </div>
-
-          <div className="attention-item">
-            <span className="attention-dot calm" />
-            <div>
-              <strong>Schedule opening</strong>
-              <p>Two technicians are free after 3:00 PM.</p>
-            </div>
-          </div>
-        </aside>
-      </section>
-    </main>
-  )
-}
-
-function PlaceholderPage({ title }: { title: string }) {
-  return (
-    <main className="dashboard">
-      <section className="placeholder-page">
-        <p className="eyebrow">DispatchArc</p>
-        <h1>{title}</h1>
-        <p>This workspace is ready for the next M20 build step.</p>
-      </section>
-    </main>
-  )
-}
 
 function App() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [globalSearch, setGlobalSearch] = useState('')
   const location = useLocation()
+  const navigate = useNavigate()
   const session = getCurrentSession()
+
+  const canViewAlerts = Boolean(
+    session &&
+      (session.role === 'Owner' ||
+        session.role === 'Dispatcher' ||
+        session.role === 'Finance'),
+  )
+
+  const alertsQuery = useQuery({
+    queryKey: ['topbar-alerts', session?.tenantId],
+    queryFn: () => getOperationalAlerts(session!.tenantId),
+    enabled: canViewAlerts,
+  })
+
+  useEffect(() => {
+    if (!notificationsOpen) {
+      return
+    }
+
+    function closeNotifications() {
+      setNotificationsOpen(false)
+    }
+
+    document.addEventListener('click', closeNotifications)
+    return () => document.removeEventListener('click', closeNotifications)
+  }, [notificationsOpen])
 
   const userInitials = session
     ? session.fullName
         .split(/\s+/)
-        .filter(Boolean)
         .slice(0, 2)
         .map((part) => part[0]?.toUpperCase())
         .join('')
@@ -234,13 +93,23 @@ function App() {
     return <Navigate replace to="/login" />
   }
 
+  const alertCount = alertsQuery.data?.totalCount ?? 0
+
+  function handleGlobalSearchSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const search = globalSearch.trim()
+
+    if (search) {
+      navigate(`/jobs?search=${encodeURIComponent(search)}`)
+    }
+  }
+
   return (
     <div className="app-shell">
       <aside className={`sidebar ${mobileNavOpen ? 'sidebar-open' : ''}`}>
         <div className="brand-row">
           <div className="brand-mark">
-            <span />
-            <span />
+              <Waypoints size={19} strokeWidth={2.2} />
           </div>
           <div className="brand-copy">
             <strong>DispatchArc</strong>
@@ -266,7 +135,11 @@ function App() {
                 `nav-item ${isActive ? 'nav-item-active' : ''}`
               }
               key={path}
-              onClick={() => setMobileNavOpen(false)}
+              onClick={() => {
+                setMobileNavOpen(false)
+                setGlobalSearch('')
+                setNotificationsOpen(false)
+              }}
               to={path}
             >
               <Icon size={18} />
@@ -307,62 +180,125 @@ function App() {
               <Menu size={20} />
             </button>
 
-            <div className="search-box">
+            <form className="search-box" onSubmit={handleGlobalSearchSubmit}>
               <Search size={17} />
               <input
                 aria-label="Search DispatchArc"
+                onChange={(event) => setGlobalSearch(event.target.value)}
                 placeholder="Search jobs, customers, invoices..."
                 type="search"
+                value={globalSearch}
               />
-              <kbd>? K</kbd>
-            </div>
+            </form>
           </div>
-
           <div className="topbar-actions">
-            <button aria-label="Notifications" className="icon-button" type="button">
-              <Bell size={18} />
-              <span className="notification-dot" />
-            </button>
+            <div className="notification-wrap">
+              <button
+                aria-expanded={notificationsOpen}
+                aria-label="Notifications"
+                className="icon-button"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  setNotificationsOpen((current) => !current)
+                }}
+                title={alertCount > 0 ? `${alertCount} operational alerts` : 'Notifications'}
+                type="button"
+              >
+                <Bell size={18} />
+                {alertCount > 0 && <span className="notification-dot" />}
+              </button>
+
+              {notificationsOpen && (
+                <div className="notification-panel" onClick={(event) => event.stopPropagation()}>
+                  <div className="notification-panel-header">
+                    <div>
+                      <span className="eyebrow">Operations</span>
+                      <strong>Notifications</strong>
+                    </div>
+                    <span>{alertCount} active</span>
+                  </div>
+
+                  {alertsQuery.isLoading ? (
+                    <p className="notification-empty">Checking for alerts...</p>
+                  ) : alertsQuery.isError ? (
+                    <p className="notification-empty">Alerts are unavailable right now.</p>
+                  ) : alertCount === 0 ? (
+                    <p className="notification-empty">Everything is clear.</p>
+                  ) : (
+                    <div className="notification-list">
+                      {alertsQuery.data?.alerts.slice(0, 5).map((alert) => (
+                        <NavLink
+                          className="notification-item"
+                          key={alert.key}
+                          onClick={() => setNotificationsOpen(false)}
+                          to="/dashboard"
+                        >
+                          <span className={`notification-severity ${alert.severity.toLowerCase()}`} />
+                          <span>
+                            <strong>{alert.title}</strong>
+                            <small>{alert.message}</small>
+                          </span>
+                        </NavLink>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             <div className="user-chip">
-  <div className="user-avatar">{userInitials}</div>
-  <div className="user-copy">
-    <strong>{session.fullName}</strong>
-    <small>{session.role}</small>
-  </div>
-</div>
+              <div className="user-avatar">{userInitials}</div>
+              <div className="user-copy">
+                <strong>{session.fullName}</strong>
+                <small>{session.role}</small>
+              </div>
+            </div>
 
-<button
-  aria-label="Sign out"
-  className="icon-button"
-  onClick={() => {
-    logout()
-    window.location.replace('/login')
-  }}
-  title="Sign out"
-  type="button"
->
-  <LogOut size={18} />
-</button>
+            <button
+              aria-label="Sign out"
+              className="icon-button"
+              onClick={() => {
+                logout()
+                window.location.replace('/login')
+              }}
+              title="Sign out"
+              type="button"
+            >
+              <LogOut size={18} />
+            </button>
           </div>
         </header>
 
         <Routes>
           <Route path="/" element={<Navigate replace to="/dashboard" />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/jobs" element={<JobsPage tenantId={session.tenantId} />} />
+          <Route
+            path="/dashboard"
+            element={
+              <DashboardPage
+                session={session}
+                tenantId={session.tenantId}
+              />
+            }
+          />
+          <Route
+            path="/jobs"
+            element={<JobsPage key={location.search} tenantId={session.tenantId} />}
+          />
           <Route
             path="/customers"
-            element={<PlaceholderPage title="Customers" />}
+            element={<CustomersPage tenantId={session.tenantId} />}
           />
-          <Route path="/team" element={<PlaceholderPage title="Team" />} />
+          <Route
+            path="/team"
+            element={<TeamMembersPage tenantId={session.tenantId} />}
+          />
           <Route
             path="/invoices"
-            element={<PlaceholderPage title="Invoices" />}
+            element={<InvoicesPage tenantId={session.tenantId} />}
           />
           <Route
             path="/payments"
-            element={<PlaceholderPage title="Payments" />}
+            element={<PaymentsPage tenantId={session.tenantId} />}
           />
           <Route path="*" element={<Navigate replace to="/dashboard" />} />
         </Routes>
