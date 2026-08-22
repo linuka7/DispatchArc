@@ -432,7 +432,7 @@
 
 .payment-form select option {
   color: var(--text);
-  background: #0a151f;
+  background: var(--surface);
 }
 
 .payment-form input:focus,

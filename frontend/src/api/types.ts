@@ -44,7 +44,6 @@ export interface AuthResponse {
 }
 
 export interface LoginRequest {
-  tenantId: string
   email: string
   password: string
 }

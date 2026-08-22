@@ -305,7 +305,7 @@
 
 .team-form-field select option {
   color: var(--text);
-  background: #0a151f;
+  background: var(--surface);
 }
 
 .team-form-field input:focus,

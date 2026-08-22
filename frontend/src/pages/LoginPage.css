@@ -2,7 +2,7 @@
   min-height: 100vh;
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(420px, 0.95fr);
-  background: #071019;
+  background: var(--bg);
 }
 
 .login-brand-panel {
@@ -24,7 +24,7 @@
       rgba(110, 168, 255, 0.08),
       transparent 30%
     ),
-    #08131d;
+    #101a20;
 }
 
 .login-brand-panel::after {
@@ -163,7 +163,7 @@
       rgba(43, 114, 145, 0.08),
       transparent 35%
     ),
-    #071019;
+    var(--bg);
 }
 
 .login-card {
@@ -311,17 +311,20 @@
 @media (max-width: 900px) {
   .login-page {
     grid-template-columns: 1fr;
+    min-height: 100svh;
+    height: 100svh;
+    overflow: hidden;
   }
 
   .login-brand-panel {
-    min-height: auto;
-    padding: 28px 24px 42px;
+    min-height: 39svh;
+    padding: 24px 24px 28px;
     border-right: 0;
     border-bottom: 1px solid var(--border);
   }
 
   .login-brand-copy {
-    margin: 70px 0 52px;
+    margin: 42px 0 24px;
   }
 
   .login-brand-copy h1 {
@@ -333,26 +336,57 @@
   }
 
   .login-form-panel {
-    min-height: auto;
-    padding: 48px 24px 70px;
+    min-height: 61svh;
+    padding: 28px 24px 32px;
   }
 }
 
 @media (max-width: 520px) {
   .login-brand-copy {
-    margin: 54px 0 30px;
+    margin: 28px 0 18px;
+  }
+
+  .login-brand-copy h1 {
+    font-size: clamp(38px, 11vw, 54px);
   }
 
   .login-brand-copy > p:last-child {
-    font-size: 11px;
+    margin-top: 14px;
+    font-size: 10px;
+    line-height: 1.5;
   }
 
   .login-form-panel {
     place-items: start stretch;
+    padding: 22px 20px 24px;
   }
 
   .login-card {
     width: 100%;
+  }
+
+  .login-icon {
+    width: 36px;
+    height: 36px;
+    margin-bottom: 16px;
+  }
+
+  .login-card form {
+    gap: 12px;
+    margin-top: 22px;
+  }
+
+  .login-field {
+    gap: 5px;
+  }
+
+  .login-field input,
+  .login-submit {
+    height: 42px;
+  }
+
+  .login-footnote {
+    margin-top: 14px;
   }
 }
 .remembered-workspace {

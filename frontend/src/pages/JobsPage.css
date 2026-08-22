@@ -371,7 +371,7 @@
   overflow-y: auto;
   border: 1px solid rgba(94, 230, 180, 0.16);
   border-radius: 16px;
-  background: #0a151f;
+  background: var(--surface);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
 }
 
@@ -453,7 +453,7 @@
 
 .job-form-field select option {
   color: #e6eef2;
-  background: #0a151f;
+  background: var(--surface);
 }
 
 .job-form-note,
@@ -627,12 +627,16 @@
   width: min(460px, 100%);
   height: 100vh;
   overflow-y: auto;
+  overflow-x: hidden;
   border-left: 1px solid rgba(94, 230, 180, 0.14);
-  background: #0a151f;
+  background: var(--surface);
   box-shadow: -24px 0 80px rgba(0, 0, 0, 0.38);
 }
 
 .job-details-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   min-height: 82px;
   display: flex;
   align-items: center;
@@ -640,6 +644,8 @@
   gap: 20px;
   padding: 21px 22px;
   border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  backdrop-filter: blur(18px);
 }
 
 .job-details-header h2 {
@@ -738,7 +744,6 @@
   color: #ef9d9a;
   border-color: rgba(255, 146, 143, 0.18);
 }
-
 .job-cancel-action:hover {
   color: #ffb2af;
   border-color: rgba(255, 146, 143, 0.3);

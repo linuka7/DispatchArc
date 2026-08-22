@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   BriefcaseBusiness,
@@ -77,9 +78,10 @@ const statusLabels: Record<JobStatus, string> = {
 
 function JobsPage({ tenantId }: JobsPageProps) {
   const queryClient = useQueryClient()
+  const [searchParams] = useSearchParams()
 
   const [status, setStatus] = useState<JobStatus | 'All'>('All')
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(searchParams.get('search') ?? '')
   const [createOpen, setCreateOpen] = useState(false)
 
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null)

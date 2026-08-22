@@ -1,13 +1,12 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import {
   BriefcaseBusiness,
   CalendarDays,
   ChevronRight,
   CircleDollarSign,
   Clock3,
-  Plus,
   RefreshCw,
   ShieldAlert,
   Wrench,
@@ -48,7 +47,6 @@ function formatJobTime(job: ServiceJob): string {
 }
 
 function DashboardPage({ tenantId, session }: DashboardPageProps) {
-  const navigate = useNavigate()
   const isOwner = session.role === 'Owner'
   const canViewAlerts = session.role === 'Owner' || session.role === 'Dispatcher' || session.role === 'Finance'
 
@@ -173,15 +171,6 @@ function DashboardPage({ tenantId, session }: DashboardPageProps) {
           >
             <RefreshCw size={16} />
             Refresh
-          </button>
-
-          <button
-            className="primary-button"
-            onClick={() => navigate('/jobs')}
-            type="button"
-          >
-            <Plus size={17} />
-            New job
           </button>
         </div>
       </section>

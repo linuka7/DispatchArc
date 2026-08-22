@@ -1,6 +1,7 @@
 using System.Net.Mail;
 using DispatchArc.Api.Auth;
 using DispatchArc.Application.Auth;
+using DispatchArc.Application.Tenants;
 using DispatchArc.Domain.Entities;
 using DispatchArc.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
@@ -14,6 +15,7 @@ namespace DispatchArc.Api.Controllers;
 [Route("api/auth")]
 public sealed class AuthController(
     IAppUserRepository users,
+    ITenantRepository tenants,
     IPasswordHasher<AppUser> passwordHasher,
     JwtTokenService jwtTokenService) : ControllerBase
 {
@@ -29,6 +31,15 @@ public sealed class AuthController(
         if (request.TenantId == Guid.Empty)
         {
             return BadRequest(CreateProblem("Invalid registration request", "Tenant ID is required.", StatusCodes.Status400BadRequest));
+        }
+
+        var tenant = await tenants.GetByIdAsync(
+            request.TenantId,
+            cancellationToken);
+
+        if (tenant is null || !tenant.IsActive)
+        {
+            return BadRequest(CreateProblem("Invalid registration request", "The specified tenant does not exist or is inactive.", StatusCodes.Status400BadRequest));
         }
 
         if (string.IsNullOrWhiteSpace(request.FullName) ||
@@ -89,7 +100,6 @@ public sealed class AuthController(
         CancellationToken cancellationToken)
     {
         var user = await users.GetByEmailAsync(
-            request.TenantId,
             request.Email,
             cancellationToken);
 

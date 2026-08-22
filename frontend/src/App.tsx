@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Bell,
   BriefcaseBusiness,
@@ -11,8 +11,9 @@ import {
   WalletCards,
   LogOut,
   X,
+  Waypoints,
 } from 'lucide-react'
-import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import './App.css'
 import LoginPage from './pages/LoginPage'
@@ -40,7 +41,10 @@ const navigation = [
 
 function App() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [globalSearch, setGlobalSearch] = useState('')
   const location = useLocation()
+  const navigate = useNavigate()
   const session = getCurrentSession()
 
   const canViewAlerts = Boolean(
@@ -56,10 +60,22 @@ function App() {
     enabled: canViewAlerts,
   })
 
+  useEffect(() => {
+    if (!notificationsOpen) {
+      return
+    }
+
+    function closeNotifications() {
+      setNotificationsOpen(false)
+    }
+
+    document.addEventListener('click', closeNotifications)
+    return () => document.removeEventListener('click', closeNotifications)
+  }, [notificationsOpen])
+
   const userInitials = session
     ? session.fullName
         .split(/\s+/)
-        .filter(Boolean)
         .slice(0, 2)
         .map((part) => part[0]?.toUpperCase())
         .join('')
@@ -79,13 +95,21 @@ function App() {
 
   const alertCount = alertsQuery.data?.totalCount ?? 0
 
+  function handleGlobalSearchSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const search = globalSearch.trim()
+
+    if (search) {
+      navigate(`/jobs?search=${encodeURIComponent(search)}`)
+    }
+  }
+
   return (
     <div className="app-shell">
       <aside className={`sidebar ${mobileNavOpen ? 'sidebar-open' : ''}`}>
         <div className="brand-row">
           <div className="brand-mark">
-            <span />
-            <span />
+              <Waypoints size={19} strokeWidth={2.2} />
           </div>
           <div className="brand-copy">
             <strong>DispatchArc</strong>
@@ -111,7 +135,11 @@ function App() {
                 `nav-item ${isActive ? 'nav-item-active' : ''}`
               }
               key={path}
-              onClick={() => setMobileNavOpen(false)}
+              onClick={() => {
+                setMobileNavOpen(false)
+                setGlobalSearch('')
+                setNotificationsOpen(false)
+              }}
               to={path}
             >
               <Icon size={18} />
@@ -152,27 +180,71 @@ function App() {
               <Menu size={20} />
             </button>
 
-            <div className="search-box">
+            <form className="search-box" onSubmit={handleGlobalSearchSubmit}>
               <Search size={17} />
               <input
                 aria-label="Search DispatchArc"
+                onChange={(event) => setGlobalSearch(event.target.value)}
                 placeholder="Search jobs, customers, invoices..."
                 type="search"
+                value={globalSearch}
               />
-              <kbd>? K</kbd>
-            </div>
+            </form>
           </div>
-
           <div className="topbar-actions">
-            <button
-              aria-label="Notifications"
-              className="icon-button"
-              title={alertCount > 0 ? `${alertCount} operational alerts` : 'Notifications'}
-              type="button"
-            >
-              <Bell size={18} />
-              {alertCount > 0 && <span className="notification-dot" />}
-            </button>
+            <div className="notification-wrap">
+              <button
+                aria-expanded={notificationsOpen}
+                aria-label="Notifications"
+                className="icon-button"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  setNotificationsOpen((current) => !current)
+                }}
+                title={alertCount > 0 ? `${alertCount} operational alerts` : 'Notifications'}
+                type="button"
+              >
+                <Bell size={18} />
+                {alertCount > 0 && <span className="notification-dot" />}
+              </button>
+
+              {notificationsOpen && (
+                <div className="notification-panel" onClick={(event) => event.stopPropagation()}>
+                  <div className="notification-panel-header">
+                    <div>
+                      <span className="eyebrow">Operations</span>
+                      <strong>Notifications</strong>
+                    </div>
+                    <span>{alertCount} active</span>
+                  </div>
+
+                  {alertsQuery.isLoading ? (
+                    <p className="notification-empty">Checking for alerts...</p>
+                  ) : alertsQuery.isError ? (
+                    <p className="notification-empty">Alerts are unavailable right now.</p>
+                  ) : alertCount === 0 ? (
+                    <p className="notification-empty">Everything is clear.</p>
+                  ) : (
+                    <div className="notification-list">
+                      {alertsQuery.data?.alerts.slice(0, 5).map((alert) => (
+                        <NavLink
+                          className="notification-item"
+                          key={alert.key}
+                          onClick={() => setNotificationsOpen(false)}
+                          to="/dashboard"
+                        >
+                          <span className={`notification-severity ${alert.severity.toLowerCase()}`} />
+                          <span>
+                            <strong>{alert.title}</strong>
+                            <small>{alert.message}</small>
+                          </span>
+                        </NavLink>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             <div className="user-chip">
               <div className="user-avatar">{userInitials}</div>
@@ -208,7 +280,10 @@ function App() {
               />
             }
           />
-          <Route path="/jobs" element={<JobsPage tenantId={session.tenantId} />} />
+          <Route
+            path="/jobs"
+            element={<JobsPage key={location.search} tenantId={session.tenantId} />}
+          />
           <Route
             path="/customers"
             element={<CustomersPage tenantId={session.tenantId} />}

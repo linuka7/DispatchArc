@@ -8,6 +8,20 @@ namespace DispatchArc.Infrastructure.Auth;
 public sealed class AppUserRepository(
     DispatchArcDbContext database) : IAppUserRepository
 {
+    public async Task<AppUser?> GetByEmailAsync(
+        string email,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+
+        var users = await database.Users
+            .Where(user => user.Email == normalizedEmail)
+            .Take(2)
+            .ToListAsync(cancellationToken);
+
+        return users.Count == 1 ? users[0] : null;
+    }
+
     public Task<AppUser?> GetByEmailAsync(
         Guid tenantId,
         string email,

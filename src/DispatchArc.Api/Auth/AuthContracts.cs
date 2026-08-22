@@ -9,7 +9,6 @@ public sealed record RegisterRequest(
     string Password);
 
 public sealed record LoginRequest(
-    Guid TenantId,
     string Email,
     string Password);
 
