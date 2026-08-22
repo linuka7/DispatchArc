@@ -124,6 +124,27 @@
   margin-top: auto;
 }
 
+.ark-credit {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 13px 10px 0;
+  color: #68736f;
+  font-size: 9px;
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.ark-credit:hover {
+  color: var(--highlight);
+}
+
+.ark-credit strong {
+  color: var(--muted-strong);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+
 .workspace-card {
   display: flex;
   align-items: center;
@@ -486,75 +507,6 @@
   background: rgba(241, 201, 139, 0.08);
 }
 
-.app-footer {
-  display: grid;
-  grid-template-columns: minmax(220px, 1fr) auto minmax(220px, 1fr);
-  align-items: center;
-  gap: 24px;
-  margin: 0 36px;
-  padding: 26px 0 30px;
-  border-top: 1px solid var(--border);
-  color: var(--muted);
-  font-size: 10px;
-}
-
-.app-footer-brand,
-.app-footer-credit {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.app-footer-brand {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-}
-
-.app-footer-kicker {
-  color: var(--text);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.app-footer-nav {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.app-footer-nav a,
-.app-footer-credit a {
-  color: var(--muted-strong);
-  text-decoration: none;
-  transition: color 160ms ease;
-}
-
-.app-footer-nav a:hover,
-.app-footer-credit a:hover {
-  color: var(--highlight);
-}
-
-.app-footer-credit {
-  justify-content: flex-end;
-}
-
-.app-footer-credit a {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  color: var(--highlight);
-  font-weight: 800;
-  letter-spacing: 0.06em;
-}
-
-.app-footer-credit small {
-  color: #68736f;
-  font-size: 10px;
-}
-
 .job-form-field select,
 .job-form-field input[type='date'],
 .job-form-field input[type='datetime-local'],
@@ -910,9 +862,6 @@ select {
     padding: 32px 18px 54px;
   }
 
-  .app-footer {
-    margin: 0 18px;
-  }
 }
 
 @media (max-width: 600px) {
@@ -973,19 +922,4 @@ select {
     padding: 0 15px;
   }
 
-  .app-footer {
-    grid-template-columns: 1fr;
-    align-items: flex-start;
-    gap: 16px;
-    padding: 22px 0 26px;
-  }
-
-  .app-footer-nav {
-    flex-wrap: wrap;
-    gap: 10px 16px;
-  }
-
-  .app-footer-credit {
-    justify-content: flex-start;
-  }
 }
