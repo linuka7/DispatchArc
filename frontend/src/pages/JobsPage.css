@@ -838,7 +838,7 @@
 
 .job-line-item-card {
   display: grid;
-  grid-template-columns: 1fr auto auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
@@ -887,7 +887,7 @@
 
 .job-add-item-form {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr auto;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 0.75fr) minmax(0, 0.9fr) auto;
   gap: 8px;
   align-items: center;
   padding: 12px;
@@ -897,6 +897,9 @@
 }
 
 .job-add-item-form input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   height: 36px;
   padding: 0 10px;
   border: 1px solid var(--border);
@@ -913,7 +916,19 @@
 
 .job-add-item-form button {
   height: 36px;
+  min-width: 0;
   padding: 0 12px;
+}
+
+@media (max-width: 430px) {
+  .job-add-item-form {
+    grid-template-columns: minmax(0, 1fr) minmax(74px, 0.45fr);
+  }
+
+  .job-add-item-form input:first-child,
+  .job-add-item-form button {
+    grid-column: 1 / -1;
+  }
 }
 
 /* Notes Feed Styles */
