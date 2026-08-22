@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { ApiError } from '../api/client'
 import { getJobs } from '../api/jobs'
+import { getInvoiceByJob } from '../api/invoices'
 import {
   getPaymentSummary,
   recordPayment,
@@ -36,9 +37,10 @@ async function getPaymentSummaries(
   const results = await Promise.all(
     jobs.map(async (job) => {
       try {
+        const invoice = await getInvoiceByJob(tenantId, job.id)
         return await getPaymentSummary(
           tenantId,
-          job.id,
+          invoice.id,
         )
       } catch (err) {
         if (err instanceof ApiError && err.status === 404) {
@@ -75,6 +77,7 @@ function PaymentsPage({
   const paymentsQuery = useQuery({
     queryKey: ['payments', tenantId],
     queryFn: () => getPaymentSummaries(tenantId),
+    refetchOnMount: 'always',
   })
 
   const summaries = paymentsQuery.data ?? []

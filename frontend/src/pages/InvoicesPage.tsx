@@ -95,6 +95,7 @@ function InvoicesPage({ tenantId }: InvoicesPageProps) {
       onSuccess: async () => {
         setInvoiceError('')
         await queryClient.invalidateQueries({ queryKey: ['invoices', tenantId] })
+        await queryClient.invalidateQueries({ queryKey: ['payments', tenantId] })
         await queryClient.invalidateQueries({ queryKey: ['completed-jobs-for-invoicing', tenantId] })
       },
       onError: (error) => {

@@ -6,6 +6,7 @@ import {
   EyeOff,
   LockKeyhole,
   ShieldCheck,
+  Waypoints,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { ApiError } from '../api/client'
@@ -50,8 +51,7 @@ export default function LoginPage() {
       <section className="login-brand-panel">
         <div className="login-brand">
           <div className="login-brand-mark">
-            <span />
-            <span />
+            <Waypoints size={20} strokeWidth={2.2} />
           </div>
 
           <div>

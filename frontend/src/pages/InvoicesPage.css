@@ -50,58 +50,63 @@
 }
 
 .invoices-summary strong {
+  margin-top: 2px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+}
 
-  .invoices-ready-panel {
+.invoices-ready-panel {
     overflow: hidden;
     margin-bottom: 24px;
     border: 1px solid rgba(241, 201, 139, 0.24);
     border-radius: 16px;
     background: linear-gradient(135deg, rgba(241, 201, 139, 0.08), rgba(255, 255, 255, 0.018));
-  }
+}
 
-  .invoices-ready-panel > header {
+.invoices-ready-panel > header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 20px;
     padding: 18px 22px;
     border-bottom: 1px solid var(--border);
-  }
+}
 
-  .invoices-ready-panel h2 {
+ .invoices-ready-panel h2 {
     margin: 4px 0 0;
     font-size: 17px;
-  }
+}
 
-  .invoices-ready-panel > header > span,
-  .invoices-ready-state {
+.invoices-ready-panel > header > span,
+.invoices-ready-state {
     color: var(--muted);
     font-size: 12px;
-  }
+}
 
-  .invoices-ready-state {
+ .invoices-ready-state {
     margin: 0;
     padding: 20px 22px;
-  }
+}
 
-  .invoices-ready-list {
+ .invoices-ready-list {
     display: flex;
     flex-direction: column;
-  }
+}
 
-  .invoices-ready-row {
+ .invoices-ready-row {
     display: flex;
     align-items: center;
     gap: 13px;
     padding: 14px 22px;
     border-bottom: 1px solid var(--border);
-  }
+}
 
-  .invoices-ready-row:last-child {
+ .invoices-ready-row:last-child {
     border-bottom: 0;
-  }
+}
 
-  .invoices-ready-icon {
+ .invoices-ready-icon {
     display: grid;
     width: 36px;
     height: 36px;
@@ -111,35 +116,35 @@
     border-radius: 10px;
     color: var(--highlight);
     background: rgba(241, 201, 139, 0.1);
-  }
+}
 
-  .invoices-ready-copy {
+ .invoices-ready-copy {
     display: flex;
     min-width: 0;
     flex: 1;
     flex-direction: column;
     gap: 3px;
-  }
+}
 
-  .invoices-ready-copy strong {
+ .invoices-ready-copy strong {
     color: var(--text);
     font-size: 12px;
-  }
+}
 
-  .invoices-ready-copy span {
+ .invoices-ready-copy span {
     overflow: hidden;
     color: var(--muted);
     font-size: 11px;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
+}
 
-  .invoices-ready-row .primary-button {
+ .invoices-ready-row .primary-button {
     min-height: 36px;
     padding: 0 12px;
-  }
+}
 
-  .invoices-ready-error {
+ .invoices-ready-error {
     margin: 0 22px 16px;
     padding: 10px 12px;
     border: 1px solid rgba(255, 146, 143, 0.2);
@@ -147,11 +152,6 @@
     color: #ef9d9a;
     background: rgba(255, 146, 143, 0.06);
     font-size: 11px;
-  }
-  margin-top: 2px;
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text);
 }
 
 .invoices-panel {
